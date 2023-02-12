@@ -27,9 +27,6 @@ jobs:
     - name: Instalacion de librerias y dependencias
       run: |
         py -m pip install --upgrade pip
-        py -m pip install --user virtualenv
-        py -m venv venv
-        .\venv\Scripts\activate
         pip install flake8 pytest
         pip install -r requirements.txt
     - name: Correr pruebas automatizadas
