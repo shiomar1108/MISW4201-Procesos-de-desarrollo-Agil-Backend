@@ -1,0 +1,18 @@
+name: Flujo de integracion Continua con Python PDA Grupo 1 Solicitud de Pull request
+
+on:
+  workflow_run:
+    workflows: [job_pruebas_automaticas]
+    types: [completed]
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo 'El flujo anterior se completo'
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'el flujo anterior no se completo'
