@@ -47,8 +47,8 @@ jobs:
     runs-on: windows-latest    
     on-success:    
     steps:
-    - run: echo 'El flujo anterior se completo'
+    run: echo 'El flujo anterior se completo'
     on-failure:
     steps:
-    - run: echo 'el flujo anterior no se completo'
+    run: echo 'el flujo anterior no se completo'
     
