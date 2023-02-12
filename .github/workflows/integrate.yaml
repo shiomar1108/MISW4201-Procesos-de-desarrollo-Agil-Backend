@@ -46,14 +46,12 @@ jobs:
   job_PR:
     on-success:
     runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-      needs: job_pruebas_automaticas
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}      
       steps:
       - run: echo 'El flujo anterior se completo'
     on-failure:
     runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-      needs: job_pruebas_automaticas
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}      
       steps:
       - run: echo 'el flujo anterior no se completo'
     
