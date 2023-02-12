@@ -1,0 +1,47 @@
+name: Flujo de integracion Continua con Python PDA Grupo 1
+
+on:
+  push:
+    branches: [ "feature_**" ]
+
+jobs:
+  job_pruebas_automaticas:
+    runs-on: windows-latest
+    outputs:
+      mensaje-commit: ${{ steps.obtener-mensaje-commit.outputs.commit-msg }}
+      rama-actual: ${{ steps.obtener-rama-actual.outputs.branch }}    
+    steps:
+    - name: Checkout de repositorio
+      uses: actions/checkout@v2
+    - name: Obtener nombre de la rama
+      id: obtener-rama-actual
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"        
+    - name: Obtener mensaje del commit
+      id: obtener-mensaje-commit
+      run: echo "::set-output name=commit-msg::${{ github.event.head_commit.message }}"  
+    - name: Configuracion de entorno de python
+      uses: actions/setup-python@v2
+      with:
+          python-version: '3.10'
+    - name: Instalacion de librerias y dependencias
+      run: |
+        py -m pip install --upgrade pip
+        py -m pip install --user virtualenv
+        py -m venv venv
+        .\venv\Scripts\activate
+        pip install flake8 pytest
+        pip install -r requirements.txt
+    - name: Correr pruebas automatizadas
+      id: correr-pruebas-automatizadas
+      run: python -m unittest discover -s tests
+    - name: Validar resultado con errores
+      if: '${{ failure() }}'
+      env:
+        MENSAJE_ERROR: Una o varias pruebas fallaron
+      run: 'echo "::set-output name=respuesta::${MENSAJE_ERROR}"'
+    - name: Validar resultado sin errores
+      if: '${{ success() }}'
+      env:
+        MENSAJE_EXITO: Todas las pruebas fueron exitosas
+      run: 'echo "::set-output name=respuesta::${MENSAJE_EXITO}"'
