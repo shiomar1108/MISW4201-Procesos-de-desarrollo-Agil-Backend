@@ -49,7 +49,7 @@ class VistaSignIn(Resource):
         return '', 204
 
     def get(self):       
-        return "prueba2", 200
+        return "prueba3", 200
 
 class VistaLogIn(Resource):
 
