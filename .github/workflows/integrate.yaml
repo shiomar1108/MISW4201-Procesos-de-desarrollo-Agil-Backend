@@ -47,5 +47,6 @@ jobs:
     runs-on: windows-latest    
     on-success:    
     steps:
-    run: echo 'El flujo anterior se completo'
+    - name: PR
+        run: echo 'El flujo anterior se completo'
     
