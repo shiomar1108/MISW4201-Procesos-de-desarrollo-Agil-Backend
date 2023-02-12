@@ -13,3 +13,6 @@ jobs:
     outputs:
       mensaje-commit: ${{ steps.obtener-mensaje-commit.outputs.commit-msg }}
       rama-actual: ${{ steps.obtener-rama-actual.outputs.branch }}    
+    steps:
+    - name: Checkout de repositorio
+      uses: actions/checkout@v2
