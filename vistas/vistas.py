@@ -48,6 +48,8 @@ class VistaSignIn(Resource):
         db.session.commit()
         return '', 204
 
+    def get(self):       
+        return "prueba", 200
 
 class VistaLogIn(Resource):
 
