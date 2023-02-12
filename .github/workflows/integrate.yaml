@@ -6,6 +6,8 @@ on:
 
 jobs:
   job_pruebas_automaticas:
+    if: ${{ contains(github.event.head_commit.message, '[Build_PR]') }}
+    name: Ejecución Pruebas Automatizadas
     runs-on: windows-latest
     outputs:
       mensaje-commit: ${{ steps.obtener-mensaje-commit.outputs.commit-msg }}
@@ -48,7 +50,7 @@ jobs:
     if: ${{ contains(github.event.head_commit.message, '[Build_PR]') }}
     name: Ejecución Merge Automatizado
     needs: job_pruebas_automaticas
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Ejecución Merge Automatizado
         id: merge-automatizado
@@ -56,6 +58,6 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           source-branch: ${{ needs.job_pruebas_automaticas.outputs.rama-actual }}
-          target-branch: develop
+          target-branch: Develop
           commit-message: '[Merge automatico] ${{ github.event.head_commit.message }}'
     
