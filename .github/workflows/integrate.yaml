@@ -42,3 +42,16 @@ jobs:
       env:
         MENSAJE_EXITO: Todas las pruebas fueron exitosas
       run: 'echo "::set-output name=respuesta::${MENSAJE_EXITO}"'
+
+  job_PR:
+    needs: job_pruebas_automaticas
+    on-success:
+    runs-on: windows-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+      steps:
+      - run: echo 'El flujo anterior se completo'
+    on-failure:
+    runs-on: windows-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+      steps:
+      - run: echo 'el flujo anterior no se completo'
