@@ -43,10 +43,10 @@ jobs:
         MENSAJE_EXITO: Todas las pruebas fueron exitosas
       run: 'echo "::set-output name=respuesta::${MENSAJE_EXITO}"'
 
-  job_PR:
+  job_pull_request:
     runs-on: windows-latest    
     on-success:    
     steps:
-    - name: PR
-        run: 'echo "::set-output name=respuesta:: segundo job"'
+    - name: pull_request
+      run: 'echo "::set-output name=respuesta:: segundo job"'
     
