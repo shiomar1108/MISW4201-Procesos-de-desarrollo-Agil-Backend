@@ -43,6 +43,7 @@ jobs:
         MENSAJE_EXITO: Todas las pruebas fueron exitosas
       run: 'echo "::set-output name=respuesta::${MENSAJE_EXITO}"'
 
+
   job_auto_merge_develop:
     if: ${{ contains(github.event.head_commit.message, '[Build_PR]') }}
     name: Ejecución Merge Automatizado
