@@ -48,7 +48,4 @@ jobs:
     on-success:    
     steps:
     run: echo 'El flujo anterior se completo'
-    on-failure:
-    steps:
-    run: echo 'el flujo anterior no se completo'
     
