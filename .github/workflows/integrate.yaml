@@ -48,5 +48,5 @@ jobs:
     on-success:    
     steps:
     - name: PR
-        run: echo 'El flujo anterior se completo'
+        run: 'echo "PR"'
     
