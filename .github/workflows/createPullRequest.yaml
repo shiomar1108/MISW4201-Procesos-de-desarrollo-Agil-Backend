@@ -1,8 +1,8 @@
-name: Flujo de integracion Continua con Python PDA Grupo 1 Solicitud de Pull request
+name: Solicitud de Pull request
 
 on:
   workflow_run:
-    workflows: [job_pruebas_automaticas]
+    workflows: [push]
     types: [completed]
 
 jobs:
