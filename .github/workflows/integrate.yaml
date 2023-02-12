@@ -44,12 +44,11 @@ jobs:
       run: 'echo "::set-output name=respuesta::${MENSAJE_EXITO}"'
 
   job_PR:
-    on-success:
     runs-on: windows-latest    
+    on-success:    
     steps:
     - run: echo 'El flujo anterior se completo'
     on-failure:
-    runs-on: windows-latest
     steps:
     - run: echo 'el flujo anterior no se completo'
     
