@@ -60,3 +60,26 @@ class TestPersona(TestCase):
         # Se valida que la informacion del entrenador haya quedado registrada
         self.assertEqual(lista_personas[0]["nombre"], nueva_persona["nombre"])
         self.assertEqual(lista_personas[0]["apellido"], nueva_persona["apellido"])
+
+    # Función que valida que no se puedan crear dos entrenadores con el mismo usuario
+    def test_crear_entrenadores_mismo_usuario(self):
+        # Se forma la esctructura del request
+        persona = {
+            "nombre": "Carlos",
+            "apellido": "Prueba",
+            "usuario": "prueba",
+            "contrasena": "prueba",
+            "rol": "ENT"
+        }
+        # Se genera el consumo del API para la creacion de un entrenador con un usuario existente
+        solicitud_creacion = self.client.post("/signin",
+                                              data=json.dumps({persona}),
+                                              headers={"Content-Type": "application/json"})
+        # Se verifica si petición de creacion del entrenador y usuario fue exitosa
+        self.assertEqual(solicitud_creacion.status_code, 200)
+        # Se genera el consumo del API para la creacion de un entrenador con un usuario existente
+        solicitud_creacion_nuevo = self.client.post("/signin",
+                                              data=json.dumps({persona}),
+                                              headers={"Content-Type": "application/json"})
+        # Se obtiene la respuesta de la creacion del entrenador
+        self.assertEqual(solicitud_creacion_nuevo.status_code, 409)
