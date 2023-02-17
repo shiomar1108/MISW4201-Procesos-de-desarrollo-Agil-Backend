@@ -30,13 +30,14 @@ class Persona(db.Model):
     terminado = db.Column(db.Date)
     entrenamientos = db.relationship('Entrenamiento', cascade='all, delete, delete-orphan')
     usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    entrenador = db.Column(db.Integer, db.ForeignKey('persona.id'))
 
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(50))
     contrasena = db.Column(db.String(50))
-    personas = db.relationship('Persona', cascade='all, delete, delete-orphan')
+    rol = db.Column(db.String(3))
 
 
 class Entrenamiento(db.Model):
