@@ -59,27 +59,40 @@ class TestPersona(TestCase):
         self.entrenador_id = lista_personas[0]["id"],
         # Se valida que la informacion del entrenador haya quedado registrada
         self.assertEqual(lista_personas[0]["nombre"], nueva_persona["nombre"])
-        self.assertEqual(lista_personas[0]["apellido"], nueva_persona["apellido"])
+        self.assertEqual(
+            lista_personas[0]["apellido"], nueva_persona["apellido"])
 
     # Función que valida que no se puedan crear dos entrenadores con el mismo usuario
     def test_crear_entrenadores_mismo_usuario(self):
+        # Se generan los datos para crear el entrenador
+        nombre_entrenador = self.data_factory.name()
+        apellido_entrenador = self.data_factory.name()
+        usuario = "test_" + self.data_factory.name()
+        contrasena = "T1$" + self.data_factory.word()
+        contrasena_encriptada = hashlib.md5(
+            contrasena.encode("utf-8")).hexdigest()
         # Se forma la esctructura del request
-        persona = {
-            "nombre": "Carlos",
-            "apellido": "Prueba",
-            "usuario": "prueba",
-            "contrasena": "prueba",
+        nueva_persona = {
+            "nombre": nombre_entrenador,
+            "apellido": apellido_entrenador,
+            "usuario": usuario,
+            "contrasena": contrasena_encriptada,
             "rol": "ENT"
         }
-        # Se genera el consumo del API para la creacion de un entrenador con un usuario existente
+        # Se genera el consumo del API para la creacion del nuevo entrenador
         solicitud_creacion = self.client.post("/signin",
-                                              data=json.dumps({persona}),
+                                              data=json.dumps(nueva_persona),
                                               headers={"Content-Type": "application/json"})
+        # Se obtiene la respuesta de la creacion del usuario
+        respuesta_creacion = json.loads(solicitud_creacion.get_data())
         # Se verifica si petición de creacion del entrenador y usuario fue exitosa
         self.assertEqual(solicitud_creacion.status_code, 200)
+        # Se obtiene el id del usuario creado
+        usuario_id = respuesta_creacion["id"]
+        self.usuarios_creados.append(usuario_id)
         # Se genera el consumo del API para la creacion de un entrenador con un usuario existente
         solicitud_creacion_nuevo = self.client.post("/signin",
-                                              data=json.dumps({persona}),
-                                              headers={"Content-Type": "application/json"})
+                                                    data=json.dumps(nueva_persona),
+                                                    headers={"Content-Type": "application/json"})
         # Se obtiene la respuesta de la creacion del entrenador
         self.assertEqual(solicitud_creacion_nuevo.status_code, 409)
