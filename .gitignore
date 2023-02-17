@@ -144,4 +144,4 @@ cython_debug/
 .idea/*
 
 #DataBase
-test.db
+dbapp.sqlite

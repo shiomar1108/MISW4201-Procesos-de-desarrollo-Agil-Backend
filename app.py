@@ -37,3 +37,6 @@ api.add_resource(VistaEntrenamiento, '/entrenamiento/<int:id_entrenamiento>')
 api.add_resource(VistaReporte, '/persona/<int:id_persona>/reporte')
 
 jwt = JWTManager(app)
+
+if __name__ == '__main__':
+    app.run(debug=True,host='0.0.0.0')
