@@ -4,6 +4,10 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 db = SQLAlchemy()
 
+
+rutinas_ejercicios = db.Table('rutina_ejercicio', db.Column('rutina_id', db.Integer, db.ForeignKey('rutina.id'), primary_key=True), \
+                              db.Column('ejercicio_id', db.Integer, db.ForeignKey('ejercicio.id'), primary_key=True))
+
 class Ejercicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(128))
@@ -11,7 +15,14 @@ class Ejercicio(db.Model):
     video = db.Column(db.String(512))
     calorias = db.Column(db.Numeric)
     entrenamientos = db.relationship('Entrenamiento')
+    rutinas = db.relationship('Rutina', secondary='rutina_ejercicio', back_populates='ejercicios')
 
+class Rutina(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(128))
+    descripcion = db.Column(db.String(512))
+    entrenamientos = db.relationship('Entrenamiento')
+    ejercicios = db.relationship('Ejercicio', secondary='rutina_ejercicio', back_populates='rutinas')
 
 class Persona(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,6 +58,7 @@ class Entrenamiento(db.Model):
     fecha = db.Column(db.Date)
     ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
     persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
+    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
 
 
 class EjercicioSchema(SQLAlchemyAutoSchema):
