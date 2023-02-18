@@ -37,7 +37,6 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(50))
     contrasena = db.Column(db.String(50))
-    personas = db.relationship('Persona', cascade='all, delete, delete-orphan')
     rol = db.Column(db.String(3))
 
 
