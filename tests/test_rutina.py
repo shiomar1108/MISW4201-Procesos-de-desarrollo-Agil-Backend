@@ -1,6 +1,8 @@
+import json
+import hashlib
 from faker import Faker
 import unittest
-from modelos import db, Rutina, Ejercicio
+from modelos import db, Usuario, Rutina, Ejercicio
 from app import app
 
 class TestRutina(unittest.TestCase):               
@@ -87,6 +89,80 @@ class TestRutina(unittest.TestCase):
         for ejercicio in ejercicios:
             db.session.delete(ejercicio)
             db.session.commit()
+
+
+class TestRutinaEndPoint(unittest.TestCase):
+
+    def setUp(self):
+        self.data_factory = Faker()
+        self.client = app.test_client()
+        
+        nombre_usuario = 'test_' + self.data_factory.name()
+        contrasena = 'T1$' + self.data_factory.word()
+        contrasena_encriptada = hashlib.md5(contrasena.encode('utf-8')).hexdigest()
+        
+        # Se crea el usuario para identificarse en la aplicación
+        usuario_nuevo = Usuario(usuario=nombre_usuario, contrasena=contrasena_encriptada)
+        db.session.add(usuario_nuevo)
+        db.session.commit()
+
+        
+        usuario_login = {
+            "usuario": nombre_usuario,
+            "contrasena": contrasena
+        }
+
+        solicitud_login = self.client.post("/login",
+                                                data=json.dumps(usuario_login),
+                                                headers={'Content-Type': 'application/json'})
+
+        respuesta_login = json.loads(solicitud_login.get_data())
+
+        self.token = respuesta_login["token"]
+        self.usuario_id = respuesta_login["id"]
+        
+        self.rutinas_creadas = []
+        
+    
+
+    def test_crear_rutina(self):
+        #Crear los datos del ejercicio
+        nombre_nueva_rutina = self.data_factory.first_name()
+        descripcion_nueva_rutina = self.data_factory.sentence()        
+        
+        #Crear el json con el ejercicio a crear
+        nueva_rutina = {
+            "nombre": nombre_nueva_rutina,
+            "descripcion": descripcion_nueva_rutina            
+        }
+        
+        #Definir endpoint, encabezados y hacer el llamado
+        endpoint_rutinas = "/rutinas"
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_nueva_rutina = self.client.post(endpoint_rutinas,
+                                                   data=json.dumps(nueva_rutina),
+                                                   headers=headers)
+                                                   
+
+        self.assertEqual(resultado_nueva_rutina.status_code, 200)
+
+
+
+    def tearDown(self):
+        rutinas = db.session.query(Rutina).all()
+        for rutina in rutinas:
+            db.session.delete(rutina)
+            db.session.commit()
+        ejercicios = db.session.query(Ejercicio).all()
+        for ejercicio in ejercicios:
+            db.session.delete(ejercicio)
+            db.session.commit() 
+        usuarios = db.session.query(Usuario).all()           
+        for usuario in usuarios:
+            db.session.delete(usuario)
+            db.session.commit()            
+
 
 
 
