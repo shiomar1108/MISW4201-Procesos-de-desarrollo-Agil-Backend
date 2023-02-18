@@ -145,7 +145,16 @@ class TestRutinaEndPoint(unittest.TestCase):
                                                    headers=headers)
                                                    
 
+        #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
+        datos_respuesta = json.loads(resultado_nueva_rutina.get_data())        
+        rutina = Rutina.query.get(datos_respuesta['id'])
+        self.rutinas_creadas.append(rutina)
+                                                           
+        #Verificar que el llamado fue exitoso y que el objeto recibido tiene los datos iguales a los creados
         self.assertEqual(resultado_nueva_rutina.status_code, 200)
+        self.assertEqual(datos_respuesta['nombre'], rutina.nombre)
+        self.assertEqual(datos_respuesta['descripcion'], rutina.descripcion)       
+        self.assertIsNotNone(datos_respuesta['id'])
 
 
 

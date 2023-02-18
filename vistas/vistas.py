@@ -12,6 +12,7 @@ from modelos import \
     Persona, PersonaSchema, \
     Entrenamiento, EntrenamientoSchema, \
     Usuario, UsuarioSchema, \
+    Rutina, RutinaSchema, \
     ReporteGeneralSchema, ReporteDetalladoSchema
 
 
@@ -19,6 +20,7 @@ ejercicio_schema = EjercicioSchema()
 persona_schema = PersonaSchema()
 entrenamiento_schema = EntrenamientoSchema()
 usuario_schema = UsuarioSchema()
+rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
 
@@ -284,3 +286,16 @@ class VistaReporte(Resource):
             data_persona.entrenamientos)
 
         return reporte_persona_schema
+
+class VistaRutinas(Resource):
+
+    @jwt_required()
+    def post(self):
+        nueva_rutina = Rutina(
+            nombre=request.json["nombre"],
+            descripcion=request.json["descripcion"],
+        )
+        db.session.add(nueva_rutina)
+        db.session.commit()
+        return rutina_schema.dump(nueva_rutina)
+
