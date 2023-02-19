@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+import enum
+
 
 db = SQLAlchemy()
 
@@ -42,6 +44,12 @@ class Persona(db.Model):
     entrenamientos = db.relationship('Entrenamiento', cascade='all, delete, delete-orphan')
     usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'))
     entrenador = db.Column(db.Integer, db.ForeignKey('persona.id'))
+
+
+class RolType(enum.Enum):
+    ADMINISTRADOR = 1
+    ENTRENADOR = 2
+    PERSONA = 3
 
 
 class Usuario(db.Model):
@@ -89,6 +97,7 @@ class PersonaSchema(SQLAlchemyAutoSchema):
 
 
 class UsuarioSchema(SQLAlchemyAutoSchema):
+    #rol = EnumADiccionario(attribute=("rol"))
     class Meta:
         model = Usuario
         include_relationships = True
