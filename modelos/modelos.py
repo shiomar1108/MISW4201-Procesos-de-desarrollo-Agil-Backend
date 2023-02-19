@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+import enum
+
 
 db = SQLAlchemy()
 
@@ -32,10 +34,18 @@ class Persona(db.Model):
     usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'))
 
 
+class RolType(enum.Enum):
+    ADMINISTRADOR = 1
+    ENTRENADOR = 2
+    PERSONA = 3
+
+
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(50))
     contrasena = db.Column(db.String(50))
+    #rol = db.Column(db.Enum(RolType))
+    rol = db.Column(db.String(50))
     personas = db.relationship('Persona', cascade='all, delete, delete-orphan')
 
 
@@ -47,6 +57,11 @@ class Entrenamiento(db.Model):
     ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
     persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
 
+class EnumADiccionario(fields.Field):
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        return {"llave": value.name, "valor": value.value}
 
 class EjercicioSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -76,12 +91,13 @@ class PersonaSchema(SQLAlchemyAutoSchema):
 
 
 class UsuarioSchema(SQLAlchemyAutoSchema):
+    #rol = EnumADiccionario(attribute=("rol"))
     class Meta:
         model = Usuario
         include_relationships = True
         load_instance = True
         
-    id = fields.String()
+    id = fields.String()    
         
 
 class ReporteGeneralSchema(Schema):
