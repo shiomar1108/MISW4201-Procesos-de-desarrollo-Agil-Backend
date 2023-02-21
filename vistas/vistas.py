@@ -80,12 +80,14 @@ class VistaLogIn(Resource):
             request.json["contrasena"].encode('utf-8')).hexdigest()
         usuario = Usuario.query.filter(Usuario.usuario == request.json["usuario"],
                                        Usuario.contrasena == contrasena_encriptada).first()
+        rol = usuario.rol
         db.session.commit()
         if usuario is None:
             return "El usuario no existe", 404
         else:
             token_de_acceso = create_access_token(identity=usuario.id)
-            return {"mensaje": "Inicio de sesión exitoso", "token": token_de_acceso, "id": usuario.id}
+            rol = usuario.rol
+            return {"mensaje": "Inicio de sesión exitoso", "token": token_de_acceso, "id": usuario.id, "rol": rol}
 
 
 class VistaPersonas(Resource):
