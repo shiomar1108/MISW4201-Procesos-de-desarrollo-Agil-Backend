@@ -21,7 +21,14 @@ class TestPersona(TestCase):
 
     # Función que permite realizar el proceso de limpieza de las pruebas realizadas
     def tearDown(self):
-        pass
+        users = db.session.query(Usuario).all()
+        for user in users:
+            db.session.delete(user)
+            db.session.commit()
+        personas = db.session.query(Persona).all()
+        for persona in personas:
+            db.session.delete(persona)
+            db.session.commit()
 
     # Función que permite crear un entrenador nuevo
     def test_crear_entrenador(self):

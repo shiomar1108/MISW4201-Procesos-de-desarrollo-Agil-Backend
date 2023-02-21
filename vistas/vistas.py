@@ -287,6 +287,13 @@ class VistaReporte(Resource):
 
         return reporte_persona_schema
 
+class VistaEntrenadores(Resource):
+    @jwt_required()
+    def get(self):
+        entrenadores = [usuario_schema.dump(usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
+        entrenadores_list = [val['id'] for val in entrenadores]
+        return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.id.in_(entrenadores_list)).all()]
+
 class VistaRutinas(Resource):
 
     @jwt_required()
@@ -298,4 +305,3 @@ class VistaRutinas(Resource):
         db.session.add(nueva_rutina)
         db.session.commit()
         return rutina_schema.dump(nueva_rutina)
-

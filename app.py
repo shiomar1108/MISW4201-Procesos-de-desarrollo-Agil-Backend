@@ -9,8 +9,8 @@ from vistas import \
     VistaPersona, VistaPersonas, \
 	VistaEjercicio, VistaEjercicios, \
 	VistaEntrenamiento, VistaEntrenamientos, \
-    VistaRutinas, \
-    VistaReporte
+  VistaRutinas,VistaEntrenadores, \
+  VistaReporte
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dbapp.sqlite'
@@ -36,6 +36,7 @@ api.add_resource(VistaEjercicio, '/ejercicio/<int:id_ejercicio>')
 api.add_resource(VistaEntrenamientos, '/entrenamientos/<int:id_persona>')
 api.add_resource(VistaEntrenamiento, '/entrenamiento/<int:id_entrenamiento>')
 api.add_resource(VistaReporte, '/persona/<int:id_persona>/reporte')
+api.add_resource(VistaEntrenadores, '/entrenadores')
 api.add_resource(VistaRutinas, '/rutinas')
 
 jwt = JWTManager(app)
