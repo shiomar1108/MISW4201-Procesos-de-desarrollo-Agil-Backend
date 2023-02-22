@@ -158,6 +158,43 @@ class TestRutinaEndPoint(unittest.TestCase):
 
 
 
+    def test_listar_rutinas(self):
+        #Crear los datos de las rutinas
+        self.data_factory = Faker()
+        Faker.seed(1000)
+        self.data = []
+        self.rutina = []
+        for i in range(0, 5):
+            self.data.append((
+                self.data_factory.first_name(),
+                self.data_factory.sentence()
+            ))
+            self.rutina.append(
+                Rutina(
+                    nombre=self.data[-1][0],
+                    descripcion=self.data[-1][1]
+                ))
+            db.session.add(self.rutina[-1])
+            db.session.commit()
+        
+               
+        #Definir endpoint, encabezados y hacer el llamado
+        endpoint_rutinas = "/rutinas"
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_consulta_rutina = self.client.get(endpoint_rutinas,
+                                                  headers=headers)
+
+        #Obtener los datos de respuesta y dejarlos en un objeto json
+        datos_respuesta = json.loads(resultado_consulta_rutina.get_data())
+                                                   
+        
+        #Verificar que el llamado fue exitoso
+        self.assertEqual(resultado_consulta_rutina.status_code, 200)
+        
+
+
+
     def tearDown(self):
         rutinas = db.session.query(Rutina).all()
         for rutina in rutinas:
