@@ -297,6 +297,11 @@ class VistaEntrenadores(Resource):
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.id.in_(entrenadores_list)).all()]
 
 class VistaRutinas(Resource):
+    @jwt_required()
+    def get(self):
+        rutinas = Rutina.query.all()
+        return [rutina_schema.dump(rutina) for rutina in rutinas]
+        
 
     @jwt_required()
     def post(self):

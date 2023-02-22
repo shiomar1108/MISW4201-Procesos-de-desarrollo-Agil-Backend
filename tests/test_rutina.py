@@ -186,11 +186,20 @@ class TestRutinaEndPoint(unittest.TestCase):
                                                   headers=headers)
 
         #Obtener los datos de respuesta y dejarlos en un objeto json
-        datos_respuesta = json.loads(resultado_consulta_rutina.get_data())
+        rutinas_respuesta = json.loads(resultado_consulta_rutina.get_data())
                                                    
         
         #Verificar que el llamado fue exitoso
         self.assertEqual(resultado_consulta_rutina.status_code, 200)
+
+        #Verificar las rutinas creadas con sus datos
+        rutinas_creadas = db.session.query(Rutina).all()
+        for rutina_creada in rutinas_creadas:
+            for rutina_respuesta in rutinas_respuesta:
+                if rutina_respuesta['id'] == rutina_creada.id:
+                    self.assertEqual(rutina_respuesta['nombre'], rutina_creada.nombre)
+                    self.assertEqual(rutina_respuesta['descripcion'], rutina_creada.descripcion)
+
         
 
 
