@@ -200,7 +200,28 @@ class TestRutinaEndPoint(unittest.TestCase):
                     self.assertEqual(rutina_respuesta['nombre'], rutina_creada.nombre)
                     self.assertEqual(rutina_respuesta['descripcion'], rutina_creada.descripcion)
 
+
+
+    def test_dar_rutina(self):
+        #Crear los datos de la rutina 
+        self.data_factory = Faker()
+        Faker.seed(1000)              
+        rutina = Rutina(nombre=self.data_factory.first_name(), descripcion=self.data_factory.sentence())
+        db.session.add(rutina)
+        db.session.commit()        
+               
+        #Definir endpoint, encabezados y hacer el llamado
+        endpoint_rutina = "/rutina/" + str(rutina.id)
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
         
+        resultado_consulta_rutina = self.client.get(endpoint_rutina,
+                                                  headers=headers)
+                                                  
+        
+        #Verificar que el llamado fue exitoso
+        self.assertEqual(resultado_consulta_rutina.status_code, 200)
+
+         
 
 
 
