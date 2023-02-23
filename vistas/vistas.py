@@ -194,12 +194,12 @@ class VistaEjercicio(Resource):
     @jwt_required()
     def delete(self, id_ejercicio):
         ejercicio = Ejercicio.query.get_or_404(id_ejercicio)
-        if not ejercicio.entrenamientos:
-            db.session.delete(ejercicio)
-            db.session.commit()
-            return '', 204
-        else:
-            return 'El ejercicio tiene entrenamientos asociados', 409
+        #if not ejercicio.entrenamientos:
+        db.session.delete(ejercicio)
+        db.session.commit()
+        return '', 204
+        #else:
+            #return 'El ejercicio tiene entrenamientos asociados', 409
 
 
 class VistaEntrenamientos(Resource):
@@ -308,3 +308,10 @@ class VistaRutinas(Resource):
         db.session.add(nueva_rutina)
         db.session.commit()
         return rutina_schema.dump(nueva_rutina)
+
+
+class VistaRutina(Resource):
+    @jwt_required()
+    def get(self, id_rutina):
+        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+        
