@@ -93,8 +93,8 @@ class VistaLogIn(Resource):
 class VistaPersonas(Resource):
     @jwt_required()
     def get(self, id_usuario):
-        usuario = Usuario.query.get_or_404(id_usuario)
-        return [persona_schema.dump(persona) for persona in usuario.personas]
+        personas = Persona.query.filter(Persona.entrenador == id_usuario)
+        return [persona_schema.dump(persona) for persona in personas]
 
     @jwt_required()
     def post(self, id_usuario):
@@ -113,10 +113,8 @@ class VistaPersonas(Resource):
             entrenando=bool(request.json["entrenando"]),
             razon=request.json["razon"],
             terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
-            usuario=usuario
+            entrenador=id_usuario
         )
-        usuario.personas.append(nueva_persona)
-        db.session.add(usuario)
         db.session.add(nueva_persona)
         db.session.commit()
         return persona_schema.dump(nueva_persona)
@@ -289,12 +287,15 @@ class VistaReporte(Resource):
 
         return reporte_persona_schema
 
+
 class VistaEntrenadores(Resource):
     @jwt_required()
     def get(self):
-        entrenadores = [usuario_schema.dump(usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
+        entrenadores = [usuario_schema.dump(
+            usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
         entrenadores_list = [val['id'] for val in entrenadores]
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.id.in_(entrenadores_list)).all()]
+
 
 class VistaRutinas(Resource):
 
