@@ -312,3 +312,8 @@ class VistaRutinas(Resource):
         db.session.add(nueva_rutina)
         db.session.commit()
         return rutina_schema.dump(nueva_rutina)
+    
+class VistaRutina(Resource):
+    @jwt_required()
+    def get(self, id_rutina):        
+        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))        

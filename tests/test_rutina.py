@@ -217,9 +217,18 @@ class TestRutinaEndPoint(unittest.TestCase):
         resultado_consulta_rutina = self.client.get(endpoint_rutina,
                                                   headers=headers)
                                                   
+        #Obtener los datos de respuesta y dejarlos en un objeto json
+        rutina_respuesta = json.loads(resultado_consulta_rutina.get_data())
+                                                   
         
         #Verificar que el llamado fue exitoso
         self.assertEqual(resultado_consulta_rutina.status_code, 200)
+
+        #Verificar las rutinas creadas con sus datos
+        rutina_creada = db.session.query(Rutina).get_or_404(rutina.id)
+        self.assertEqual(rutina_respuesta['id'], str(rutina_creada.id))
+        self.assertEqual(rutina_respuesta['nombre'], rutina_creada.nombre)
+        self.assertEqual(rutina_respuesta['descripcion'], rutina_creada.descripcion)
 
          
 
