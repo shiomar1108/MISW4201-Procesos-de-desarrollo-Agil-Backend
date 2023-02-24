@@ -302,7 +302,7 @@ class TestRutinaEndPoint(unittest.TestCase):
 
         
         #COnsultar Ejercicios de una Rutina por Servicio
-        endpoint_rutinas = "/rutinas/" + str(rutina.id)
+        endpoint_rutinas = "/rutina/" + str(rutina.id)
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
         
         resultado_consulta_rutina = self.client.get(endpoint_rutinas,                                                  
