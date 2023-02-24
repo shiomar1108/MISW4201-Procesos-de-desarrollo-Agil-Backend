@@ -16,14 +16,14 @@ class Ejercicio(db.Model):
     descripcion = db.Column(db.String(512))
     video = db.Column(db.String(512))
     calorias = db.Column(db.Numeric)
-    entrenamientos = db.relationship('Entrenamiento')
+    #entrenamientos = db.relationship('Entrenamiento')
     rutinas = db.relationship('Rutina', secondary='rutina_ejercicio', back_populates='ejercicios')
 
 class Rutina(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(128))
     descripcion = db.Column(db.String(512))
-    entrenamientos = db.relationship('Entrenamiento')
+    #entrenamientos = db.relationship('Entrenamiento')
     ejercicios = db.relationship('Ejercicio', secondary='rutina_ejercicio', back_populates='rutinas')
 
 class Persona(db.Model):
@@ -134,5 +134,5 @@ class RutinaSchema(SQLAlchemyAutoSchema):
         load_instance = True
         
     id = fields.String()
-    entrenamientos = fields.Nested(EntrenamientoSchema, many=True)
+    #entrenamientos = fields.Nested(EntrenamientoSchema, many=True)
     ejercicios = fields.Nested(EjercicioSchema, many=True)
