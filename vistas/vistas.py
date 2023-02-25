@@ -317,4 +317,15 @@ class VistaRutinas(Resource):
 class VistaRutina(Resource):
     @jwt_required()
     def get(self, id_rutina):        
-        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))        
+        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+    
+class VistaRutinaEjercicio(Resource):    
+    @jwt_required()
+    def put(self, id_rutina, id_ejercicio):        
+        rutina = db.session.query(Rutina).get_or_404(id_rutina)
+        ejercicio = db.session.query(Ejercicio).get_or_404(id_ejercicio)        
+        rutina.ejercicios.append(ejercicio)
+        db.session.commit()
+        return  rutina_schema.dump(rutina)
+    
+

@@ -308,8 +308,9 @@ class TestRutinaEndPoint(unittest.TestCase):
         Faker.seed(1000)              
         rutina = Rutina(nombre=self.data_factory.first_name(), descripcion=self.data_factory.sentence())
         db.session.add(rutina)
-        db.session.commit()    
-
+        db.session.commit()
+        ejercicios_originales = len(rutina.ejercicios)    
+        
         self.data = []
         self.ejercicio = []
         for i in range(0, 10):
@@ -329,19 +330,43 @@ class TestRutinaEndPoint(unittest.TestCase):
             db.session.add(self.ejercicio[-1])
             db.session.commit()
 
-        rutina_id = 1
-        ejercicio_id = random.randint(1,10)
+        id_rutina = 1
+        id_ejercicio = random.randint(1,10)                 
         
         #Definir endpoint, encabezados y hacer el llamado
-        endpoint_rutina = "/rutina/" + str(rutina_id) + "/ejercicio/" + str(ejercicio_id)
+        endpoint_rutina = "/rutina/" + str(id_rutina) + "/ejercicio/" + str(id_ejercicio)
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
         
-        resultado_consulta_rutina = self.client.put(endpoint_rutina,
+        resultado_asociar_ejercicio = self.client.put(endpoint_rutina,
                                                     headers=headers)
                                                   
         
+        #Obtener los datos de respuesta y dejarlos un objeto json
+        datos_asociacion = json.loads(resultado_asociar_ejercicio.get_data())        
+         
         #Verificar que el llamado fue exitoso
-        self.assertEqual(resultado_consulta_rutina.status_code, 200)
+        self.assertEqual(resultado_asociar_ejercicio.status_code, 200)
+        
+        rutina_actualizada = db.session.query(Rutina).get(id_rutina)
+        #Verificar que la rutina tiene un nuevo ejercicio asociado
+        self.assertNotEqual(ejercicios_originales,len(rutina_actualizada.ejercicios))
+        
+        #verificar que el id del ejercicio asociado es igual al id del ejercicio enviado
+        self.assertEqual(datos_asociacion['ejercicios'][0]['id'], str(id_ejercicio))
+
+
+        #Verificar que no se duplican ejercicios al hacer una nueva llamada
+        endpoint_rutina = "/rutina/" + str(id_rutina) + "/ejercicio/" + str(id_ejercicio)
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_asociar_ejercicio_repetido = self.client.put(endpoint_rutina,
+                                                    headers=headers)
+
+        datos_nueva_asociacion = json.loads(resultado_asociar_ejercicio_repetido.get_data())
+        
+        self.assertEqual(resultado_asociar_ejercicio_repetido.status_code, 200)
+        self.assertEqual(len(datos_nueva_asociacion['ejercicios']), len(datos_asociacion['ejercicios']))
+
 
 
 
