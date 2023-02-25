@@ -250,8 +250,8 @@ class TestRutinaEndPoint(unittest.TestCase):
         
         resultado_nueva_rutina = self.client.post(endpoint_rutinas,
                                                    data=json.dumps(nueva_rutina),
-                                                   headers=headers)
-                                                   
+                                                   headers=headers)                                                   
+
 
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
         datos_respuesta = json.loads(resultado_nueva_rutina.get_data())        
@@ -384,6 +384,93 @@ class TestRutinaEndPoint(unittest.TestCase):
         for usuario in usuarios:
             db.session.delete(usuario)
             db.session.commit()
+            
+
+    def test_consultar_rutinas_diferentes(self):
+        #Crear los datos del ejercicio
+        nombre_nueva_rutina = self.data_factory.first_name()
+        descripcion_nueva_rutina = self.data_factory.sentence()        
+        
+        #Crear el json con el ejercicio a crear
+        nueva_rutina = {
+            "nombre": nombre_nueva_rutina,
+            "descripcion": descripcion_nueva_rutina            
+        }
+        
+        #Definir endpoint, encabezados y hacer el llamado
+        endpoint_rutinas = "/rutinas"
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_nueva_rutina = self.client.post(endpoint_rutinas,
+                                                   data=json.dumps(nueva_rutina),
+                                                   headers=headers)                                                   
+
+        #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
+        datos_respuesta = json.loads(resultado_nueva_rutina.get_data())        
+        rutina = Rutina.query.get(datos_respuesta['id'])
+        data = []
+        ejercicio = []
+        for i in range(0, 5):
+            data.append((
+                self.data_factory.first_name(),
+                self.data_factory.sentence(),
+                self.data_factory.file_path(depth=3),
+                self.data_factory.random_int(1, 10000)
+            ))
+
+            ejercicio.append(
+                Ejercicio(
+                    nombre=data[-1][0],
+                    descripcion=data[-1][1],
+                    video=data[-1][2],
+                    calorias=data[-1][3]
+                ))
+            #print('ejercicios............................')
+            db.session.add(ejercicio[-1])
+            db.session.commit()
+
+
+        ejercicios = db.session.query(Ejercicio).all()
+        for i in range(0, len(ejercicios)):
+            #print('ejercicios............................')
+            print(ejercicios[i])
+            rutina.ejercicios.append(ejercicios[i])
+            db.session.commit()
+
+       # agregar ejercicios nos asignados a una rutina
+        ejercicio2 = []
+        for i in range(0, 1):
+            data.append((
+                self.data_factory.first_name(),
+                self.data_factory.sentence(),
+                self.data_factory.file_path(depth=3),
+                self.data_factory.random_int(1, 10000)
+            ))
+            ejercicio2.append(
+                Ejercicio(
+                    nombre=data[-1][0],
+                    descripcion=data[-1][1],
+                    video=data[-1][2],
+                    calorias=data[-1][3]
+                ))
+            #print('ejercicios............................')
+            db.session.add(ejercicio2[-1])
+            db.session.commit()
+
+        #COnsultar Ejercicios de una Rutina por Servicio
+        endpoint_rutinas_diferentes = "/rutina/" + str(rutina.id) + str("/diferente")
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_consulta_rutina = self.client.get(endpoint_rutinas_diferentes,                                                  
+                                                   headers=headers)
+
+        #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
+        datos_respuesta_rutina_ejercicios = json.loads(resultado_consulta_rutina.get_data())
+        print("== == == == == == == == == == == = ")
+        print(datos_respuesta_rutina_ejercicios)
+        
+
+        self.assertEqual(len(ejercicio2), len(datos_respuesta_rutina_ejercicios) )
 
 
 

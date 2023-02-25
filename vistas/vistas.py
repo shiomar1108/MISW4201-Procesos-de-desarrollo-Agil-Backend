@@ -5,10 +5,11 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
+from json import dumps
 
 from modelos import \
     db, \
-    Ejercicio, EjercicioSchema, \
+    Ejercicio, EjercicioSchema, rutinas_ejercicios, \
     Persona, PersonaSchema, \
     Entrenamiento, EntrenamientoSchema, \
     Usuario, UsuarioSchema, \
@@ -78,8 +79,10 @@ class VistaLogIn(Resource):
     def post(self):
         contrasena_encriptada = hashlib.md5(
             request.json["contrasena"].encode('utf-8')).hexdigest()
+        print(contrasena_encriptada)
         usuario = Usuario.query.filter(Usuario.usuario == request.json["usuario"],
                                        Usuario.contrasena == contrasena_encriptada).first()
+        print(usuario)
         rol = usuario.rol
         db.session.commit()
         if usuario is None:
@@ -318,6 +321,25 @@ class VistaRutina(Resource):
     @jwt_required()
     def get(self, id_rutina):        
         return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+
+
+class VistaRutinaDiferente(Resource):
+    @jwt_required()
+    def get(self, id_rutina):
+        ejerciciosDisponibles = []
+        ejerciciosRutina = rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+        ejerciciosRutinaString = dumps(ejerciciosRutina)
+        ejercicios = Ejercicio.query.all()
+        lista_ejercicios = [ejercicio_schema.dump(ejercicio) for ejercicio in ejercicios]
+        for ejercicio in lista_ejercicios:
+            nombreEjercicio = ejercicio['nombre']
+            if not nombreEjercicio in ejerciciosRutinaString:
+              ejerciciosDisponibles.append(ejercicio)
+        return ejerciciosDisponibles
+        
+
+        
+
     
 class VistaRutinaEjercicio(Resource):    
     @jwt_required()
@@ -328,4 +350,5 @@ class VistaRutinaEjercicio(Resource):
         db.session.commit()
         return  rutina_schema.dump(rutina)
     
+
 
