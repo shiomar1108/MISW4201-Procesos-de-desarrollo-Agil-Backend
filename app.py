@@ -5,12 +5,13 @@ from flask_restful import Api
 
 from modelos import db
 from vistas import \
-    VistaSignIn, VistaLogIn, \
-    VistaPersona, VistaPersonas, \
+  VistaSignIn, VistaLogIn, \
+  VistaPersona, VistaPersonas, \
 	VistaEjercicio, VistaEjercicios, \
 	VistaEntrenamiento, VistaEntrenamientos, \
   VistaRutinas, VistaRutina,VistaRutinaDiferente, VistaEntrenadores, \
   VistaReporte
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dbapp.sqlite'
@@ -40,6 +41,7 @@ api.add_resource(VistaEntrenadores, '/entrenadores')
 api.add_resource(VistaRutinas, '/rutinas')
 api.add_resource(VistaRutina, '/rutina/<int:id_rutina>')
 api.add_resource(VistaRutinaDiferente, '/rutina/<int:id_rutina>/diferente')
+
 
 jwt = JWTManager(app)
 
