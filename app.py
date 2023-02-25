@@ -10,7 +10,7 @@ from vistas import \
 	VistaEjercicio, VistaEjercicios, \
 	VistaEntrenamiento, VistaEntrenamientos, \
   VistaRutinas, VistaRutina,VistaRutinaDiferente, VistaEntrenadores, \
-  VistaReporte
+  VistaReporte, VistaRutinaEjercicio
 
 
 app = Flask(__name__)
@@ -41,6 +41,7 @@ api.add_resource(VistaEntrenadores, '/entrenadores')
 api.add_resource(VistaRutinas, '/rutinas')
 api.add_resource(VistaRutina, '/rutina/<int:id_rutina>')
 api.add_resource(VistaRutinaDiferente, '/rutina/<int:id_rutina>/diferente')
+api.add_resource(VistaRutinaEjercicio, '/rutina/<int:id_rutina>/ejercicio/<int:id_ejercicio>')
 
 
 jwt = JWTManager(app)

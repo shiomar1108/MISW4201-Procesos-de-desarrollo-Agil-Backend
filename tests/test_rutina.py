@@ -101,6 +101,7 @@ class TestRutinaEndPoint(unittest.TestCase):
         nombre_usuario = 'test_' + self.data_factory.name()
         contrasena = 'T1$' + self.data_factory.word()
         contrasena_encriptada = hashlib.md5(contrasena.encode('utf-8')).hexdigest()
+        
         # Se crea el usuario para identificarse en la aplicación
         usuario_nuevo = Usuario(usuario=nombre_usuario, contrasena=contrasena_encriptada)
         db.session.add(usuario_nuevo)
@@ -251,6 +252,7 @@ class TestRutinaEndPoint(unittest.TestCase):
                                                    data=json.dumps(nueva_rutina),
                                                    headers=headers)                                                   
 
+
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
         datos_respuesta = json.loads(resultado_nueva_rutina.get_data())        
         rutina = Rutina.query.get(datos_respuesta['id'])
@@ -292,14 +294,13 @@ class TestRutinaEndPoint(unittest.TestCase):
 
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
         datos_respuesta_rutina = json.loads(resultado_consulta_rutina.get_data())
-        print('resutado =======')
-        print(datos_respuesta_rutina)        
+        #print('resutado =======')
+        #print(datos_respuesta_rutina)        
         rutina = Rutina.query.get(datos_respuesta_rutina['id'])
 
 
         self.assertEqual(ejercicios, rutina.ejercicios )
         
-
 
     def test_asociar_ejercicio_a_rutina(self):
         #Crear los datos de la rutina 
@@ -314,7 +315,11 @@ class TestRutinaEndPoint(unittest.TestCase):
         self.ejercicio = []
         for i in range(0, 10):
             self.data.append((
-            =======
+                self.data_factory.first_name(),
+                self.data_factory.sentence(),
+                self.data_factory.file_path(depth=3),
+                self.data_factory.random_int(1, 10000)
+            ))
             self.ejercicio.append(
                 Ejercicio(
                     nombre=self.data[-1][0],
