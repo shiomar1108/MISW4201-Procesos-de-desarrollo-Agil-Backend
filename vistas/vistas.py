@@ -317,19 +317,19 @@ class VistaRutina(Resource):
     def get(self, id_rutina):
         return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
 
-#class VistaRutinaDiferente(Resource):
-    #@jwt_required()
-    #def get(self, id_rutina):
-        #ejerciciosDisponibles = []
-        #ejerciciosRutina = rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
-        #ejerciciosRutinaString = dumps(ejerciciosRutina)
-        #ejercicios = Ejercicio.query.all()
-        #lista_ejercicios = [ejercicio_schema.dump(ejercicio) for ejercicio in ejercicios]
-        #for ejercicio in lista_ejercicios:
-            #nombreEjercicio = ejercicio['nombre']
-            #if not nombreEjercicio in ejerciciosRutinaString:
-              #ejerciciosDisponibles.append(ejercicio)
-        #return ejerciciosDisponibles
+class VistaRutinaDiferente(Resource):
+    @jwt_required()
+    def get(self, id_rutina):
+        ejerciciosDisponibles = []
+        ejerciciosRutina = rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+        ejerciciosRutinaString = dumps(ejerciciosRutina)
+        ejercicios = Ejercicio.query.all()
+        lista_ejercicios = [ejercicio_schema.dump(ejercicio) for ejercicio in ejercicios]
+        for ejercicio in lista_ejercicios:
+            nombreEjercicio = ejercicio['nombre']
+            if not nombreEjercicio in ejerciciosRutinaString:
+              ejerciciosDisponibles.append(ejercicio)
+        return ejerciciosDisponibles
         
 
         
