@@ -5,13 +5,15 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
+from json import dumps
 
 from modelos import \
     db, \
-    Ejercicio, EjercicioSchema, \
+    Ejercicio, EjercicioSchema, rutinas_ejercicios, \
     Persona, PersonaSchema, \
     Entrenamiento, EntrenamientoSchema, \
     Usuario, UsuarioSchema, \
+    Rutina, RutinaSchema, \
     ReporteGeneralSchema, ReporteDetalladoSchema
 
 
@@ -19,22 +21,42 @@ ejercicio_schema = EjercicioSchema()
 persona_schema = PersonaSchema()
 entrenamiento_schema = EntrenamientoSchema()
 usuario_schema = UsuarioSchema()
+rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
-    
+
+
 class VistaSignIn(Resource):
 
     def post(self):
-        usuario = Usuario.query.filter(Usuario.usuario == request.json["usuario"]).first()
+        usuario = Usuario.query.filter(
+            Usuario.usuario == request.json["usuario"]).first()
         if usuario is None:
-            contrasena_encriptada = hashlib.md5(request.json["contrasena"].encode('utf-8')).hexdigest()
-            nuevo_usuario = Usuario(usuario=request.json["usuario"], contrasena=contrasena_encriptada)
+            contrasena_encriptada = hashlib.md5(
+                request.json["contrasena"].encode('utf-8')).hexdigest()
+            if not "rol" in request.json:
+                nuevo_usuario = Usuario(
+                    usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol="ENT")
+            else:
+                nuevo_usuario = Usuario(
+                    usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol=request.json["rol"])
             db.session.add(nuevo_usuario)
             db.session.commit()
-            #token_de_acceso = create_access_token(identity=nuevo_usuario.id)
+
+            # Creacion de entrenador
+            if nuevo_usuario.rol == "ENT":
+                nueva_persona = Persona(
+                    nombre=request.json["nombre"],
+                    apellido=request.json["apellido"],
+                    usuario=nuevo_usuario.id,
+                    entrenando=False
+                )
+                db.session.add(nueva_persona)
+                db.session.commit()
+
             return {"mensaje": "usuario creado exitosamente", "id": nuevo_usuario.id}
         else:
-            return "El usuario ya existe", 404
+            return "El usuario ya existe", 409
 
     def put(self, id_usuario):
         usuario = Usuario.query.get_or_404(id_usuario)
@@ -48,48 +70,54 @@ class VistaSignIn(Resource):
         db.session.commit()
         return '', 204
 
+    def get(self):
+        return "prueba3", 200
+
 
 class VistaLogIn(Resource):
 
     def post(self):
-        contrasena_encriptada = hashlib.md5(request.json["contrasena"].encode('utf-8')).hexdigest()
+        contrasena_encriptada = hashlib.md5(
+            request.json["contrasena"].encode('utf-8')).hexdigest()
+        print(contrasena_encriptada)
         usuario = Usuario.query.filter(Usuario.usuario == request.json["usuario"],
                                        Usuario.contrasena == contrasena_encriptada).first()
+        print(usuario)
+        rol = usuario.rol
         db.session.commit()
         if usuario is None:
             return "El usuario no existe", 404
         else:
             token_de_acceso = create_access_token(identity=usuario.id)
-            return {"mensaje": "Inicio de sesión exitoso", "token": token_de_acceso, "id": usuario.id}
+            rol = usuario.rol
+            return {"mensaje": "Inicio de sesión exitoso", "token": token_de_acceso, "id": usuario.id, "rol": rol}
 
 
 class VistaPersonas(Resource):
     @jwt_required()
     def get(self, id_usuario):
-        usuario = Usuario.query.get_or_404(id_usuario)
-        return [persona_schema.dump(persona) for persona in usuario.personas]
+        personas = Persona.query.filter(Persona.entrenador == id_usuario)
+        return [persona_schema.dump(persona) for persona in personas]
 
     @jwt_required()
     def post(self, id_usuario):
         usuario = Usuario.query.get_or_404(id_usuario)
-        nueva_persona = Persona( \
-            nombre = request.json["nombre"], \
-            apellido = request.json["apellido"], \
-            talla = float(request.json["talla"]), \
-            peso = float(request.json["peso"]), \
-            edad = float(request.json["edad"]), \
-            ingreso = datetime.strptime(request.json["ingreso"], '%Y-%m-%d'), \
-            brazo = float(request.json["brazo"]), \
-            pecho = float(request.json["pecho"]), \
-            cintura = float(request.json["cintura"]), \
-            pierna = float(request.json["pierna"]), \
-            entrenando = bool(request.json["entrenando"]), \
-            razon = request.json["razon"], \
-            terminado = datetime.strptime(request.json["terminado"], '%Y-%m-%d'), \
-            usuario = usuario \
+        nueva_persona = Persona(
+            nombre=request.json["nombre"],
+            apellido=request.json["apellido"],
+            talla=float(request.json["talla"]),
+            peso=float(request.json["peso"]),
+            edad=float(request.json["edad"]),
+            ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
+            brazo=float(request.json["brazo"]),
+            pecho=float(request.json["pecho"]),
+            cintura=float(request.json["cintura"]),
+            pierna=float(request.json["pierna"]),
+            entrenando=bool(request.json["entrenando"]),
+            razon=request.json["razon"],
+            terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
+            entrenador=id_usuario
         )
-        usuario.personas.append(nueva_persona)
-        db.session.add(usuario)
         db.session.add(nueva_persona)
         db.session.commit()
         return persona_schema.dump(nueva_persona)
@@ -99,7 +127,7 @@ class VistaPersona(Resource):
     @jwt_required()
     def get(self, id_persona):
         return persona_schema.dump(Persona.query.get_or_404(id_persona))
-        
+
     @jwt_required()
     def put(self, id_persona):
         persona = Persona.query.get_or_404(id_persona)
@@ -108,14 +136,16 @@ class VistaPersona(Resource):
         persona.talla = float(request.json["talla"])
         persona.peso = float(request.json["peso"])
         persona.edad = float(request.json["edad"])
-        persona.ingreso = datetime.strptime(request.json["ingreso"], '%Y-%m-%d')
+        persona.ingreso = datetime.strptime(
+            request.json["ingreso"], '%Y-%m-%d')
         persona.brazo = float(request.json["brazo"])
         persona.pecho = float(request.json["pecho"])
         persona.cintura = float(request.json["cintura"])
         persona.pierna = float(request.json["pierna"])
         persona.entrenando = bool(request.json["entrenando"])
         persona.razon = request.json["razon"]
-        persona.terminado = datetime.strptime(request.json["terminado"], '%Y-%m-%d')
+        persona.terminado = datetime.strptime(
+            request.json["terminado"], '%Y-%m-%d')
         db.session.commit()
         return persona_schema.dump(persona)
 
@@ -129,7 +159,7 @@ class VistaPersona(Resource):
         else:
             return 'La persona tiene entrenamientos asociados', 409
 
-        
+
 class VistaEjercicios(Resource):
     @jwt_required()
     def get(self):
@@ -138,11 +168,11 @@ class VistaEjercicios(Resource):
 
     @jwt_required()
     def post(self):
-        nuevo_ejercicio = Ejercicio( \
-            nombre = request.json["nombre"], \
-            descripcion = request.json["descripcion"], \
-            video = request.json["video"], \
-            calorias = float(request.json["calorias"]),
+        nuevo_ejercicio = Ejercicio(
+            nombre=request.json["nombre"],
+            descripcion=request.json["descripcion"],
+            video=request.json["video"],
+            calorias=float(request.json["calorias"]),
         )
         db.session.add(nuevo_ejercicio)
         db.session.commit()
@@ -153,7 +183,7 @@ class VistaEjercicio(Resource):
     @jwt_required()
     def get(self, id_ejercicio):
         return ejercicio_schema.dump(Ejercicio.query.get_or_404(id_ejercicio))
-        
+
     @jwt_required()
     def put(self, id_ejercicio):
         ejercicio = Ejercicio.query.get_or_404(id_ejercicio)
@@ -167,12 +197,12 @@ class VistaEjercicio(Resource):
     @jwt_required()
     def delete(self, id_ejercicio):
         ejercicio = Ejercicio.query.get_or_404(id_ejercicio)
-        if not ejercicio.entrenamientos:
-            db.session.delete(ejercicio)
-            db.session.commit()
-            return '', 204
-        else:
-            return 'El ejercicio tiene entrenamientos asociados', 409
+        #if not ejercicio.entrenamientos:
+        db.session.delete(ejercicio)
+        db.session.commit()
+        return '', 204
+        #else:
+            #return 'El ejercicio tiene entrenamientos asociados', 409
 
 
 class VistaEntrenamientos(Resource):
@@ -180,24 +210,26 @@ class VistaEntrenamientos(Resource):
     def get(self, id_persona):
         persona = Persona.query.get_or_404(id_persona)
         entrenamiento_array = []
-        
+
         for entrenamiento in persona.entrenamientos:
             ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
-            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
-            entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
+            entrenamiento_schema_dump = entrenamiento_schema.dump(
+                entrenamiento)
+            entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(
+                ejercicio)
             entrenamiento_array.append(entrenamiento_schema_dump)
         return [entrenamiento for entrenamiento in entrenamiento_array]
-
 
     @jwt_required()
     def post(self, id_persona):
         print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
-        nuevo_entrenamiento = Entrenamiento( \
-            tiempo = datetime.strptime(request.json["tiempo"], '%H:%M:%S').time(), \
-            repeticiones = float(request.json["repeticiones"]), \
-            fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date(), \
-            ejercicio = request.json["ejercicio"], \
-            persona = id_persona
+        nuevo_entrenamiento = Entrenamiento(
+            tiempo=datetime.strptime(
+                request.json["tiempo"], '%H:%M:%S').time(),
+            repeticiones=float(request.json["repeticiones"]),
+            fecha=datetime.strptime(request.json["fecha"], '%Y-%m-%d').date(),
+            ejercicio=request.json["ejercicio"],
+            persona=id_persona
         )
         db.session.add(nuevo_entrenamiento)
         db.session.commit()
@@ -208,13 +240,15 @@ class VistaEntrenamiento(Resource):
     @jwt_required()
     def get(self, id_entrenamiento):
         return entrenamiento_schema.dump(Entrenamiento.query.get_or_404(id_entrenamiento))
-        
+
     @jwt_required()
     def put(self, id_entrenamiento):
         entrenamiento = Entrenamiento.query.get_or_404(id_entrenamiento)
-        entrenamiento.tiempo = datetime.strptime(request.json["tiempo"], '%H:%M:%S').time()
+        entrenamiento.tiempo = datetime.strptime(
+            request.json["tiempo"], '%H:%M:%S').time()
         entrenamiento.repeticiones = float(request.json["repeticiones"])
-        entrenamiento.fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date()
+        entrenamiento.fecha = datetime.strptime(
+            request.json["fecha"], '%Y-%m-%d').date()
         entrenamiento.ejercicio = request.json["ejercicio"]
         entrenamiento.persona = request.json["persona"]
         db.session.commit()
@@ -236,16 +270,86 @@ class VistaReporte(Resource):
         reporte_entrenamiento = []
         utilidad = UtilidadReporte()
         data_persona = Persona.query.get_or_404(id_persona)
-        imc_calculado = utilidad.calcular_imc(data_persona.talla, data_persona.peso)
-        clasificacion_imc_calculado = utilidad.dar_clasificacion_imc(imc_calculado)
-        
-        reporte_persona = dict(persona=data_persona, imc=imc_calculado, clasificacion_imc=clasificacion_imc_calculado)
+        imc_calculado = utilidad.calcular_imc(
+            data_persona.talla, data_persona.peso)
+        clasificacion_imc_calculado = utilidad.dar_clasificacion_imc(
+            imc_calculado)
+
+        reporte_persona = dict(persona=data_persona, imc=imc_calculado,
+                               clasificacion_imc=clasificacion_imc_calculado)
         reporte_persona_schema = reporte_general_schema.dump(reporte_persona)
 
         for entrenamiento in data_persona.entrenamientos:
-            data_entrenamiento = dict(fecha=entrenamiento.fecha, repeticiones=entrenamiento.repeticiones, calorias=1)
-            reporte_entrenamiento.append(reporte_detallado_schema.dump(data_entrenamiento))
-        
-        reporte_persona_schema['resultados'] = utilidad.dar_resultados(data_persona.entrenamientos)
+            data_entrenamiento = dict(
+                fecha=entrenamiento.fecha, repeticiones=entrenamiento.repeticiones, calorias=1)
+            reporte_entrenamiento.append(
+                reporte_detallado_schema.dump(data_entrenamiento))
+
+        reporte_persona_schema['resultados'] = utilidad.dar_resultados(
+            data_persona.entrenamientos)
 
         return reporte_persona_schema
+
+
+class VistaEntrenadores(Resource):
+    @jwt_required()
+    def get(self):
+        entrenadores = [usuario_schema.dump(
+            usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
+        entrenadores_list = [val['id'] for val in entrenadores]
+        print(entrenadores_list)
+        return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
+
+
+class VistaRutinas(Resource):
+    @jwt_required()
+    def get(self):
+        rutinas = Rutina.query.all()
+        return [rutina_schema.dump(rutina) for rutina in rutinas]
+        
+
+    @jwt_required()
+    def post(self):
+        nueva_rutina = Rutina(
+            nombre=request.json["nombre"],
+            descripcion=request.json["descripcion"],
+        )
+        db.session.add(nueva_rutina)
+        db.session.commit()
+        return rutina_schema.dump(nueva_rutina)
+    
+class VistaRutina(Resource):
+    @jwt_required()
+    def get(self, id_rutina):        
+        return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+
+
+class VistaRutinaDiferente(Resource):
+    @jwt_required()
+    def get(self, id_rutina):
+        ejerciciosDisponibles = []
+        ejerciciosRutina = rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
+        ejerciciosRutinaString = dumps(ejerciciosRutina)
+        ejercicios = Ejercicio.query.all()
+        lista_ejercicios = [ejercicio_schema.dump(ejercicio) for ejercicio in ejercicios]
+        for ejercicio in lista_ejercicios:
+            nombreEjercicio = ejercicio['nombre']
+            if not nombreEjercicio in ejerciciosRutinaString:
+              ejerciciosDisponibles.append(ejercicio)
+        return ejerciciosDisponibles
+        
+
+        
+
+    
+class VistaRutinaEjercicio(Resource):    
+    @jwt_required()
+    def put(self, id_rutina, id_ejercicio):        
+        rutina = db.session.query(Rutina).get_or_404(id_rutina)
+        ejercicio = db.session.query(Ejercicio).get_or_404(id_ejercicio)        
+        rutina.ejercicios.append(ejercicio)
+        db.session.commit()
+        return  rutina_schema.dump(rutina)
+    
+
+

@@ -1,8 +1,14 @@
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+import enum
+
 
 db = SQLAlchemy()
+
+
+rutinas_ejercicios = db.Table('rutina_ejercicio', db.Column('rutina_id', db.Integer, db.ForeignKey('rutina.id'), primary_key=True), \
+                              db.Column('ejercicio_id', db.Integer, db.ForeignKey('ejercicio.id'), primary_key=True))
 
 class Ejercicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -11,7 +17,14 @@ class Ejercicio(db.Model):
     video = db.Column(db.String(512))
     calorias = db.Column(db.Numeric)
     entrenamientos = db.relationship('Entrenamiento')
+    rutinas = db.relationship('Rutina', secondary='rutina_ejercicio', back_populates='ejercicios')
 
+class Rutina(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(128))
+    descripcion = db.Column(db.String(512))
+    entrenamientos = db.relationship('Entrenamiento')
+    ejercicios = db.relationship('Ejercicio', secondary='rutina_ejercicio', back_populates='rutinas')
 
 class Persona(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,13 +43,20 @@ class Persona(db.Model):
     terminado = db.Column(db.Date)
     entrenamientos = db.relationship('Entrenamiento', cascade='all, delete, delete-orphan')
     usuario = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    entrenador = db.Column(db.Integer, db.ForeignKey('persona.id'))
+
+
+class RolType(enum.Enum):
+    ADMINISTRADOR = 1
+    ENTRENADOR = 2
+    PERSONA = 3
 
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(50))
     contrasena = db.Column(db.String(50))
-    personas = db.relationship('Persona', cascade='all, delete, delete-orphan')
+    rol = db.Column(db.String(3))
 
 
 class Entrenamiento(db.Model):
@@ -46,6 +66,7 @@ class Entrenamiento(db.Model):
     fecha = db.Column(db.Date)
     ejercicio = db.Column(db.Integer, db.ForeignKey('ejercicio.id'))
     persona = db.Column(db.Integer, db.ForeignKey('persona.id'))
+    rutina = db.Column(db.Integer, db.ForeignKey('rutina.id'))
 
 
 class EjercicioSchema(SQLAlchemyAutoSchema):
@@ -76,6 +97,7 @@ class PersonaSchema(SQLAlchemyAutoSchema):
 
 
 class UsuarioSchema(SQLAlchemyAutoSchema):
+    #rol = EnumADiccionario(attribute=("rol"))
     class Meta:
         model = Usuario
         include_relationships = True
@@ -104,3 +126,13 @@ class EntrenamientoSchema(SQLAlchemyAutoSchema):
     
     id = fields.String()
     repeticiones = fields.String()
+
+class RutinaSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Rutina
+        include_relationships = True        
+        load_instance = True
+        
+    id = fields.String()
+    #entrenamientos = fields.Nested(EntrenamientoSchema, many=True)
+    ejercicios = fields.Nested(EjercicioSchema, many=True)
