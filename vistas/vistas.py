@@ -297,7 +297,8 @@ class VistaEntrenadores(Resource):
         entrenadores = [usuario_schema.dump(
             usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
         entrenadores_list = [val['id'] for val in entrenadores]
-        return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.id.in_(entrenadores_list)).all()]
+        print(entrenadores_list)
+        return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
 
 
 class VistaRutinas(Resource):
