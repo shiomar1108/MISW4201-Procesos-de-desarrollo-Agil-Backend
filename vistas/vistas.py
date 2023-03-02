@@ -210,14 +210,12 @@ class VistaEntrenamientos(Resource):
     def get(self, id_persona):
         persona = Persona.query.get_or_404(id_persona)
         entrenamiento_array = []
-
         for entrenamiento in persona.entrenamientos:
             ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
-            entrenamiento_schema_dump = entrenamiento_schema.dump(
-                entrenamiento)
-            entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(
-                ejercicio)
-            entrenamiento_array.append(entrenamiento_schema_dump)
+            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
+            if entrenamiento_schema_dump['rutina'] == None:
+              entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
+              entrenamiento_array.append(entrenamiento_schema_dump)
         return [entrenamiento for entrenamiento in entrenamiento_array]
 
     @jwt_required()
