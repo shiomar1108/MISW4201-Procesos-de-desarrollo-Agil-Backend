@@ -336,12 +336,9 @@ class VistaRutinaDiferente(Resource):
             nombreEjercicio = ejercicio['nombre']
             if not nombreEjercicio in ejerciciosRutinaString:
               ejerciciosDisponibles.append(ejercicio)
-        return ejerciciosDisponibles
-        
+        return ejerciciosDisponibles       
 
-        
-
-    
+ 
 class VistaRutinaEjercicio(Resource):    
     @jwt_required()
     def put(self, id_rutina, id_ejercicio):        
@@ -350,6 +347,13 @@ class VistaRutinaEjercicio(Resource):
         rutina.ejercicios.append(ejercicio)
         db.session.commit()
         return  rutina_schema.dump(rutina)
-    
+
+class VistaRutinasEntrenamiento(Resource):    
+    @jwt_required()
+    def get(self):        
+        rutinas = db.session.execute('SELECT Q1.* FROM RUTINA AS Q1, (SELECT RUTINA_ID, COUNT(RUTINA_ID) AS TOTAL_EJERCICIOS FROM RUTINA_EJERCICIO GROUP BY RUTINA_ID) \
+                                      AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
+              
+        return [rutina_schema.dump(rutina) for rutina in rutinas]
 
 
