@@ -367,24 +367,7 @@ class TestRutinaEndPoint(unittest.TestCase):
         self.assertEqual(resultado_asociar_ejercicio_repetido.status_code, 200)
         self.assertEqual(len(datos_nueva_asociacion['ejercicios']), len(datos_asociacion['ejercicios']))
 
-
-
-
-
-    def tearDown(self):
-        rutinas = db.session.query(Rutina).all()
-        for rutina in rutinas:
-            db.session.delete(rutina)
-            db.session.commit()
-        ejercicios = db.session.query(Ejercicio).all()
-        for ejercicio in ejercicios:
-            db.session.delete(ejercicio)
-            db.session.commit() 
-        usuarios = db.session.query(Usuario).all()           
-        for usuario in usuarios:
-            db.session.delete(usuario)
-            db.session.commit()
-            
+           
 
     def test_consultar_rutinas_diferentes(self):
         #Crear los datos del ejercicio
@@ -471,6 +454,93 @@ class TestRutinaEndPoint(unittest.TestCase):
         
 
         self.assertEqual(len(ejercicio2), len(datos_respuesta_rutina_ejercicios) )
+
+
+
+    def test_consulta_rutina_con_3_ejercicios(self):
+        #Crear los datos de la rutina 
+        self.data_factory = Faker()
+        Faker.seed(1000)              
+        rutina1 = Rutina(nombre=self.data_factory.first_name(), descripcion=self.data_factory.sentence())
+        rutina2 = Rutina(nombre=self.data_factory.first_name(), descripcion=self.data_factory.sentence())
+        rutina3 = Rutina(nombre=self.data_factory.first_name(), descripcion=self.data_factory.sentence())
+        db.session.add(rutina1)
+        db.session.add(rutina2)
+        db.session.add(rutina3)
+        db.session.commit()
+            
+        
+        self.data = []
+        self.ejercicio = []
+        for i in range(0, 20):
+            self.data.append((
+                self.data_factory.first_name(),
+                self.data_factory.sentence(),
+                self.data_factory.file_path(depth=3),
+                self.data_factory.random_int(1, 10000)
+            ))
+            self.ejercicio.append(
+                Ejercicio(
+                    nombre=self.data[-1][0],
+                    descripcion=self.data[-1][1],
+                    video=self.data[-1][2],
+                    calorias=self.data[-1][3]
+                ))
+            db.session.add(self.ejercicio[-1])
+            db.session.commit()
+
+        #Asociar cantidad aleatoria de ejercicios a rutinas
+        id_ejercicios = list(range(1,21))
+        totalEjercicios = random.randint(0,3)
+        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios)
+        for i in range(0, totalEjercicios):                        
+            ejercicio = db.session.query(Ejercicio).get(id_ejercicios_muestra[i])
+            rutina1.ejercicios.append(ejercicio)
+            db.session.commit()        
+                                 
+        totalEjercicios = random.randint(3,10)
+        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios)
+        for i in range(0, totalEjercicios):                        
+            ejercicio = db.session.query(Ejercicio).get(id_ejercicios_muestra[i])
+            rutina2.ejercicios.append(ejercicio)
+            db.session.commit()        
+
+        totalEjercicios = random.randint(10,20)
+        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios)
+        for i in range(0, totalEjercicios):                        
+            ejercicio = db.session.query(Ejercicio).get(id_ejercicios_muestra[i])
+            rutina3.ejercicios.append(ejercicio)
+            db.session.commit()
+
+        #Definir endpoint, encabezados y hacer el llamado
+        endpoint_rutinaEntrenamiento = "/rutinasEntrenamiento" 
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
+        
+        resultado_rutinasEntrenamiento = self.client.get(endpoint_rutinaEntrenamiento,
+                                                         headers=headers)
+                                                  
+        
+        #Verificar que el llamado fue exitoso
+        self.assertEqual(resultado_rutinasEntrenamiento.status_code, 200)
+        
+
+
+
+
+
+    def tearDown(self):
+        rutinas = db.session.query(Rutina).all()
+        for rutina in rutinas:
+            db.session.delete(rutina)
+            db.session.commit()
+        ejercicios = db.session.query(Ejercicio).all()
+        for ejercicio in ejercicios:
+            db.session.delete(ejercicio)
+            db.session.commit() 
+        usuarios = db.session.query(Usuario).all()           
+        for usuario in usuarios:
+            db.session.delete(usuario)
+            db.session.commit()
 
 
 
