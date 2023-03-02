@@ -489,39 +489,60 @@ class TestRutinaEndPoint(unittest.TestCase):
             db.session.add(self.ejercicio[-1])
             db.session.commit()
 
-        #Asociar cantidad aleatoria de ejercicios a rutinas
+        #Se asocia cantidad aleatoria de ejercicios a rutinas
+        #Se asocia menos de 3 ejercicios a Rutina 1 
         id_ejercicios = list(range(1,21))
-        totalEjercicios = random.randint(0,3)
-        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios)
-        for i in range(0, totalEjercicios):                        
+        totalEjercicios1 = random.randint(0,2)
+        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios1)
+        for i in range(0, totalEjercicios1):                        
             ejercicio = db.session.query(Ejercicio).get(id_ejercicios_muestra[i])
             rutina1.ejercicios.append(ejercicio)
             db.session.commit()        
-                                 
-        totalEjercicios = random.randint(3,10)
-        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios)
-        for i in range(0, totalEjercicios):                        
+
+        #Se asocia entre 3 y 9 ejercicios a Rutina 2                         
+        totalEjercicios2 = random.randint(3,9)
+        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios2)
+        for i in range(0, totalEjercicios2):                        
             ejercicio = db.session.query(Ejercicio).get(id_ejercicios_muestra[i])
             rutina2.ejercicios.append(ejercicio)
             db.session.commit()        
-
-        totalEjercicios = random.randint(10,20)
-        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios)
-        for i in range(0, totalEjercicios):                        
+        
+        #Se asocia entre 10 y 20 ejercicios a Rutina 3
+        totalEjercicios3 = random.randint(10,20)
+        id_ejercicios_muestra = random.sample(id_ejercicios, totalEjercicios3)
+        for i in range(0, totalEjercicios3):                        
             ejercicio = db.session.query(Ejercicio).get(id_ejercicios_muestra[i])
             rutina3.ejercicios.append(ejercicio)
             db.session.commit()
 
         #Definir endpoint, encabezados y hacer el llamado
-        endpoint_rutinaEntrenamiento = "/rutinasEntrenamiento" 
+        endpoint_rutinasEntrenamiento = "/rutinasEntrenamiento" 
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
         
-        resultado_rutinasEntrenamiento = self.client.get(endpoint_rutinaEntrenamiento,
+        resultado_rutinasEntrenamiento = self.client.get(endpoint_rutinasEntrenamiento,
                                                          headers=headers)
                                                   
         
+        #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
+        datos_respuesta_rutinasEntrenamiento = json.loads(resultado_rutinasEntrenamiento.get_data())
+
         #Verificar que el llamado fue exitoso
         self.assertEqual(resultado_rutinasEntrenamiento.status_code, 200)
+        
+        #Obtener los id's de las rutinas de la respuesta
+        id_rutinasEntrenamiento = []
+        for i in range(len(datos_respuesta_rutinasEntrenamiento)):
+            id_rutina = datos_respuesta_rutinasEntrenamiento[i]['id']
+            id_rutinasEntrenamiento.append(id_rutina)
+        
+        #Verificar que rutina1 tiene menos de 3 ejercicios (no pertenece a la respuesta)
+        self.assertNotIn('1', id_rutinasEntrenamiento)
+
+        #Verificar que rutina2 tiene 3 ejercicios o mas (pertenece a la respuesta)
+        self.assertIn('2', id_rutinasEntrenamiento)
+
+        #Verificar que rutina3 tiene 3 ejercicios o mas (pertenece a la respuesta)
+        self.assertIn('3', id_rutinasEntrenamiento)
         
 
 
