@@ -335,6 +335,12 @@ class VistaEntrenadores(Resource):
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
 
 
+class VistaEntrenador(Resource):
+    @jwt_required()
+    def delete(self, id_usuario):
+        return 'El entrenador tienen clientes asociados', 409
+
+
 class VistaRutinas(Resource):
     @jwt_required()
     def get(self):
