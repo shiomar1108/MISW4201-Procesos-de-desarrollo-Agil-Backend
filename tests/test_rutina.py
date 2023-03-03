@@ -518,8 +518,8 @@ class TestRutinaEndPoint(unittest.TestCase):
         
         resultado_rutinasEntrenamiento = self.client.get(endpoint_rutinasEntrenamiento,
                                                          headers=headers)
-                                                  
-        
+
+               
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
         datos_respuesta_rutinasEntrenamiento = json.loads(resultado_rutinasEntrenamiento.get_data())
 

@@ -385,10 +385,19 @@ class VistaRutinaEjercicio(Resource):
 class VistaRutinasEntrenamiento(Resource):    
     @jwt_required()
     def get(self):        
-        rutinas = db.session.execute('SELECT Q1.* FROM RUTINA AS Q1, (SELECT RUTINA_ID, COUNT(RUTINA_ID) AS TOTAL_EJERCICIOS FROM RUTINA_EJERCICIO GROUP BY RUTINA_ID) \
-                                      AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
+        sql_rutinas = db.session.execute('SELECT Q1.ID FROM RUTINA AS Q1, (SELECT RUTINA_ID, COUNT(RUTINA_ID) AS TOTAL_EJERCICIOS FROM RUTINA_EJERCICIO GROUP BY RUTINA_ID) \
+                                          AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
               
-        return [rutina_schema.dump(rutina) for rutina in rutinas]
+        id_rutinas = sql_rutinas.scalars().all()  
+        rutinas = db.session.query(Rutina).all()
+        rutinasEntrenamiento = []
+        for rutina in rutinas:
+            if rutina.id in id_rutinas:
+                rutinasEntrenamiento.append(rutina)
+
+        return [rutina_schema.dump(rutina) for rutina in rutinasEntrenamiento]
+    
+    
 
 class VistaRutinaEntrenamientoPersona(Resource):
     @jwt_required()
