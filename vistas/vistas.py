@@ -335,6 +335,24 @@ class VistaEntrenadores(Resource):
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
 
 
+class VistaEntrenador(Resource):
+    @jwt_required()
+    def delete(self, id_usuario):
+        personas = Persona.query.filter_by(entrenador=id_usuario).all()
+        if len(personas) == 0:
+             # Se elimina la persona
+            persona = Persona.query.filter_by(usuario=id_usuario).first()
+            db.session.delete(persona)
+            db.session.commit()
+            # Se elimina el usuario
+            usuario = Usuario.query.get_or_404(id_usuario)
+            db.session.delete(usuario)
+            db.session.commit()
+            return '', 204
+        else:
+            return 'El entrenador tienen clientes asociados', 409
+
+
 class VistaRutinas(Resource):
     @jwt_required()
     def get(self):
