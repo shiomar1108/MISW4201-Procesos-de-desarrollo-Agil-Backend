@@ -417,7 +417,7 @@ class VistaRutinaEntrenamientoPersona(Resource):
         for group, entrenamientos in groupby(entrenamientorutina_array, key_function):
                 user = {
                         "fecha": group[0],
-                        "rutina": group[1],
+                        "rutina": rutina_schema.dump(Rutina.query.get_or_404(group[1])),
                         "persona": group[2],
                         "repeticionesTotales": 0,
                         "tiempoTotal": "00:00:00",
