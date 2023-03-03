@@ -6,6 +6,7 @@ from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
 from json import dumps
+from itertools import groupby
 
 from modelos import \
     db, \
@@ -14,7 +15,8 @@ from modelos import \
     Entrenamiento, EntrenamientoSchema, \
     Usuario, UsuarioSchema, \
     Rutina, RutinaSchema, \
-    ReporteGeneralSchema, ReporteDetalladoSchema
+    ReporteGeneralSchema, ReporteDetalladoSchema, \
+    RutinaEntrenamientoSchema
 
 
 ejercicio_schema = EjercicioSchema()
@@ -24,6 +26,7 @@ usuario_schema = UsuarioSchema()
 rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
+rutinaEntrenamiento_schema = RutinaEntrenamientoSchema()
 
 
 class VistaSignIn(Resource):
@@ -295,7 +298,6 @@ class VistaEntrenadores(Resource):
         entrenadores = [usuario_schema.dump(
             usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
         entrenadores_list = [val['id'] for val in entrenadores]
-        print(entrenadores_list)
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
 
 
@@ -354,4 +356,44 @@ class VistaRutinasEntrenamiento(Resource):
               
         return [rutina_schema.dump(rutina) for rutina in rutinas]
 
+class VistaRutinaEntrenamientoPersona(Resource):
+    @jwt_required()
+    def get(self,id_persona):
+        persona = Persona.query.get_or_404(id_persona)
+        entrenamientorutina_array = []
+        for entrenamiento in persona.entrenamientos:
+            ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
+            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
+            if entrenamiento_schema_dump['rutina'] != None:
+              entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
+              entrenamientorutina_array.append(entrenamiento_schema_dump)
+        
+        result = []
+        key_function = lambda x: (x["fecha"], x["rutina"], x["persona"])
+        entrenamientorutina_array.sort(key = key_function)
+        for group, entrenamientos in groupby(entrenamientorutina_array, key_function):
+                user = {
+                        "fecha": group[0],
+                        "rutina": group[1],
+                        "persona": group[2],
+                        "repeticionesTotales": 0,
+                        "tiempoTotal": "00:00:00",
+                        "entrenamientos": []
+                }
+                ttoal = [0,0,0]
+                for entrenamiento in entrenamientos:
+                    user["repeticionesTotales"] += int(float(entrenamiento["repeticiones"]))
+                    arr = entrenamiento["tiempo"].split(':')
+                    ttoal[0] += int(arr[0])
+                    ttoal[1] += int(arr[1])
+                    ttoal[2] += int(arr[2])
+                    user["entrenamientos"].append(entrenamiento)
+                user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
+                result.append(user)
+        ejer_aux = ejercicio_schema.dump(result[0]["entrenamientos"][0]['ejercicio'])
+        entre_aux = result[0]["entrenamientos"][0]
+        print(entre_aux)
+        entre_aux_dump = entrenamiento_schema.dump(result[0]["entrenamientos"][0])
+        print(entre_aux_dump)
+        return [rutinaEntrenamiento_schema.dump(entrenamientoRutina) for entrenamientoRutina in result]
 
