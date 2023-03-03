@@ -124,7 +124,19 @@ class TestRutinaEndPoint(unittest.TestCase):
         
         self.rutinas_creadas = []
         
-    
+    def tearDown(self):
+        rutinas = db.session.query(Rutina).all()
+        for rutina in rutinas:
+            db.session.delete(rutina)
+            db.session.commit()
+        ejercicios = db.session.query(Ejercicio).all()
+        for ejercicio in ejercicios:
+            db.session.delete(ejercicio)
+            db.session.commit() 
+        usuarios = db.session.query(Usuario).all()           
+        for usuario in usuarios:
+            db.session.delete(usuario)
+            db.session.commit()    
 
     def test_crear_rutina(self):
         #Crear los datos del ejercicio
@@ -158,7 +170,6 @@ class TestRutinaEndPoint(unittest.TestCase):
         self.assertIsNotNone(datos_respuesta['id'])
 
 
-
     def test_listar_rutinas(self):
         #Crear los datos de las rutinas
         self.data_factory = Faker()
@@ -188,7 +199,6 @@ class TestRutinaEndPoint(unittest.TestCase):
 
         #Obtener los datos de respuesta y dejarlos en un objeto json
         rutinas_respuesta = json.loads(resultado_consulta_rutina.get_data())
-                                                   
         
         #Verificar que el llamado fue exitoso
         self.assertEqual(resultado_consulta_rutina.status_code, 200)
@@ -200,7 +210,6 @@ class TestRutinaEndPoint(unittest.TestCase):
                 if rutina_respuesta['id'] == rutina_creada.id:
                     self.assertEqual(rutina_respuesta['nombre'], rutina_creada.nombre)
                     self.assertEqual(rutina_respuesta['descripcion'], rutina_creada.descripcion)
-
 
 
     def test_dar_rutina(self):
@@ -230,7 +239,6 @@ class TestRutinaEndPoint(unittest.TestCase):
         self.assertEqual(rutina_respuesta['id'], str(rutina_creada.id))
         self.assertEqual(rutina_respuesta['nombre'], rutina_creada.nombre)
         self.assertEqual(rutina_respuesta['descripcion'], rutina_creada.descripcion)
- 
 
       
     def test_consultar_rutina(self):
@@ -283,7 +291,6 @@ class TestRutinaEndPoint(unittest.TestCase):
             print(ejercicios[i])
             rutina.ejercicios.append(ejercicios[i])
             db.session.commit()
-
         
         #COnsultar Ejercicios de una Rutina por Servicio
         endpoint_rutinas = "/rutina/" + str(rutina.id)
@@ -297,10 +304,7 @@ class TestRutinaEndPoint(unittest.TestCase):
         #print('resutado =======')
         #print(datos_respuesta_rutina)        
         rutina = Rutina.query.get(datos_respuesta_rutina['id'])
-
-
         self.assertEqual(ejercicios, rutina.ejercicios )
-        
 
     def test_asociar_ejercicio_a_rutina(self):
         #Crear los datos de la rutina 
@@ -339,7 +343,6 @@ class TestRutinaEndPoint(unittest.TestCase):
         
         resultado_asociar_ejercicio = self.client.put(endpoint_rutina,
                                                     headers=headers)
-                                                  
         
         #Obtener los datos de respuesta y dejarlos un objeto json
         datos_asociacion = json.loads(resultado_asociar_ejercicio.get_data())        
@@ -354,7 +357,6 @@ class TestRutinaEndPoint(unittest.TestCase):
         #verificar que el id del ejercicio asociado es igual al id del ejercicio enviado
         self.assertEqual(datos_asociacion['ejercicios'][0]['id'], str(id_ejercicio))
 
-
         #Verificar que no se duplican ejercicios al hacer una nueva llamada
         endpoint_rutina = "/rutina/" + str(id_rutina) + "/ejercicio/" + str(id_ejercicio)
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
@@ -366,7 +368,6 @@ class TestRutinaEndPoint(unittest.TestCase):
         
         self.assertEqual(resultado_asociar_ejercicio_repetido.status_code, 200)
         self.assertEqual(len(datos_nueva_asociacion['ejercicios']), len(datos_asociacion['ejercicios']))
-
            
 
     def test_consultar_rutinas_diferentes(self):
@@ -451,10 +452,7 @@ class TestRutinaEndPoint(unittest.TestCase):
         datos_respuesta_rutina_ejercicios = json.loads(resultado_consulta_rutina.get_data())
         print("== == == == == == == == == == == = ")
         print(datos_respuesta_rutina_ejercicios)
-        
-
         self.assertEqual(len(ejercicio2), len(datos_respuesta_rutina_ejercicios) )
-
 
 
     def test_consulta_rutina_con_3_ejercicios(self):
@@ -468,7 +466,6 @@ class TestRutinaEndPoint(unittest.TestCase):
         db.session.add(rutina2)
         db.session.add(rutina3)
         db.session.commit()
-            
         
         self.data = []
         self.ejercicio = []
@@ -543,26 +540,6 @@ class TestRutinaEndPoint(unittest.TestCase):
 
         #Verificar que rutina3 tiene 3 ejercicios o mas (pertenece a la respuesta)
         self.assertIn('3', id_rutinasEntrenamiento)
-        
-
-
-
-
-
-    def tearDown(self):
-        rutinas = db.session.query(Rutina).all()
-        for rutina in rutinas:
-            db.session.delete(rutina)
-            db.session.commit()
-        ejercicios = db.session.query(Ejercicio).all()
-        for ejercicio in ejercicios:
-            db.session.delete(ejercicio)
-            db.session.commit() 
-        usuarios = db.session.query(Usuario).all()           
-        for usuario in usuarios:
-            db.session.delete(usuario)
-            db.session.commit()
-
 
 
 if __name__ == '__main__':
