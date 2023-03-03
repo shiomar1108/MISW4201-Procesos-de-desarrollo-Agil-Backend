@@ -31,6 +31,7 @@ class VistaSignIn(Resource):
     def post(self):
         usuario = Usuario.query.filter(
             Usuario.usuario == request.json["usuario"]).first()
+        print(usuario)
         if usuario is None:
             contrasena_encriptada = hashlib.md5(
                 request.json["contrasena"].encode('utf-8')).hexdigest()
@@ -101,27 +102,63 @@ class VistaPersonas(Resource):
 
     @jwt_required()
     def post(self, id_usuario):
-        usuario = Usuario.query.get_or_404(id_usuario)
-        nueva_persona = Persona(
-            nombre=request.json["nombre"],
-            apellido=request.json["apellido"],
-            talla=float(request.json["talla"]),
-            peso=float(request.json["peso"]),
-            edad=float(request.json["edad"]),
-            ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
-            brazo=float(request.json["brazo"]),
-            pecho=float(request.json["pecho"]),
-            cintura=float(request.json["cintura"]),
-            pierna=float(request.json["pierna"]),
-            entrenando=bool(request.json["entrenando"]),
-            razon=request.json["razon"],
-            terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
-            entrenador=id_usuario
-        )
-        db.session.add(nueva_persona)
-        db.session.commit()
-        return persona_schema.dump(nueva_persona)
-
+        if "usuario" and "contrasena" in request.json:
+            usuarioACrear = request.json["usuario"]
+            usuario = Usuario.query.filter(Usuario.usuario == usuarioACrear).first()
+            # Validamos si el usuario ya esta registrado
+            if usuario is None:
+                # Creación del usuario
+                contrasena_encriptada = hashlib.md5(
+                    request.json["contrasena"].encode('utf-8')).hexdigest()
+                nuevo_usuario = Usuario(
+                        usuario=usuarioACrear, contrasena=contrasena_encriptada, rol="CLI")
+                db.session.add(nuevo_usuario)
+                db.session.commit()
+                # Creación del cliente
+                nueva_persona = Persona(
+                    nombre=request.json["nombre"],
+                    apellido=request.json["apellido"],
+                    talla=float(request.json["talla"]),
+                    peso=float(request.json["peso"]),
+                    edad=float(request.json["edad"]),
+                    ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
+                    brazo=float(request.json["brazo"]),
+                    pecho=float(request.json["pecho"]),
+                    cintura=float(request.json["cintura"]),
+                    pierna=float(request.json["pierna"]),
+                    entrenando=bool(request.json["entrenando"]),
+                    razon=request.json["razon"],
+                    terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
+                    usuario=nuevo_usuario.id,
+                    entrenador=id_usuario
+                )
+                db.session.add(nueva_persona)
+                db.session.commit()
+                return persona_schema.dump(nueva_persona)
+            else:
+                return "El usuario ya existe", 409
+        else:
+            # Creación del cliente
+                nueva_persona = Persona(
+                    nombre=request.json["nombre"],
+                    apellido=request.json["apellido"],
+                    talla=float(request.json["talla"]),
+                    peso=float(request.json["peso"]),
+                    edad=float(request.json["edad"]),
+                    ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
+                    brazo=float(request.json["brazo"]),
+                    pecho=float(request.json["pecho"]),
+                    cintura=float(request.json["cintura"]),
+                    pierna=float(request.json["pierna"]),
+                    entrenando=bool(request.json["entrenando"]),
+                    razon=request.json["razon"],
+                    terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
+                    entrenador=id_usuario
+                )
+                db.session.add(nueva_persona)
+                db.session.commit()
+                return persona_schema.dump(nueva_persona)
+        
 
 class VistaPersona(Resource):
     @jwt_required()
@@ -388,4 +425,3 @@ class VistaRutinaEntrenamientoPersona(Resource):
                 user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
                 result.append(user)
         return [entrenamientoRutina for entrenamientoRutina in result]
-

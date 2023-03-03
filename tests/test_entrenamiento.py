@@ -19,7 +19,6 @@ class TestEntrenamiento(TestCase):
         nombre_entrenador = self.data_factory.name()
         apellido_entrenador = self.data_factory.name()
         usuario = "test_" + self.data_factory.first_name()
-        rol = "ENT"
         contrasena = "T1$" + self.data_factory.last_name()
         # Se forma la esctructura del request
         nueva_persona = {
