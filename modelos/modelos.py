@@ -115,7 +115,6 @@ class ReporteDetalladoSchema(Schema):
     fecha = fields.String()
     repeticiones = fields.Float()
     calorias = fields.Float()
-    
 
 class EntrenamientoSchema(SQLAlchemyAutoSchema):
     class Meta:
