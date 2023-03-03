@@ -15,8 +15,7 @@ from modelos import \
     Entrenamiento, EntrenamientoSchema, \
     Usuario, UsuarioSchema, \
     Rutina, RutinaSchema, \
-    ReporteGeneralSchema, ReporteDetalladoSchema, \
-    RutinaEntrenamientoSchema
+    ReporteGeneralSchema, ReporteDetalladoSchema
 
 
 ejercicio_schema = EjercicioSchema()
@@ -26,8 +25,6 @@ usuario_schema = UsuarioSchema()
 rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
-rutinaEntrenamiento_schema = RutinaEntrenamientoSchema()
-
 
 class VistaSignIn(Resource):
 
@@ -390,10 +387,5 @@ class VistaRutinaEntrenamientoPersona(Resource):
                     user["entrenamientos"].append(entrenamiento)
                 user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
                 result.append(user)
-        ejer_aux = ejercicio_schema.dump(result[0]["entrenamientos"][0]['ejercicio'])
-        entre_aux = result[0]["entrenamientos"][0]
-        print(entre_aux)
-        entre_aux_dump = entrenamiento_schema.dump(result[0]["entrenamientos"][0])
-        print(entre_aux_dump)
-        return [rutinaEntrenamiento_schema.dump(entrenamientoRutina) for entrenamientoRutina in result]
+        return [entrenamientoRutina for entrenamientoRutina in result]
 

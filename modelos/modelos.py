@@ -126,15 +126,6 @@ class EntrenamientoSchema(SQLAlchemyAutoSchema):
     id = fields.String()
     repeticiones = fields.String()
 
-class RutinaEntrenamientoSchema(Schema):
-    
-    fecha = fields.String()
-    rutina = fields.Int()
-    persona = fields.Int()
-    repeticionesTotales = fields.Int()
-    tiempoTotal = fields.String()
-    entrenamientos = fields.Nested(EntrenamientoSchema, many=True)
-
 class RutinaSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Rutina
