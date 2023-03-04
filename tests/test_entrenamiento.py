@@ -126,3 +126,24 @@ class TestEntrenamiento(TestCase):
         for item in json.loads(resultado_consulta_entrenamientos.get_data()):
             self.assertTrue(item['id'] == self.entrenamientos_creados[index])
             index += 1
+
+    def registrar_rutina_realizada(self):
+        self.data_factory = Faker()
+        self.client = app.test_client()
+        
+        nombre_usuario = 'test_' + self.data_factory.name()
+        contrasena = 'T1$' + self.data_factory.word()
+        contrasena_encriptada = hashlib.md5(contrasena.encode('utf-8')).hexdigest()
+
+        registrar_entrenamiento = "{'idRutina': '1', 'fecha': '2023-03-02', 'idPersona': '1', 'entrenamientos': [{'tiempo': '00:10:10', 'repeticiones': '3', 'ejercicio': '1'}, {'tiempo': '00:10:10', 'repeticiones': '3', 'ejercicio': '1'}]}"
+        
+        # Se realiza la consulta de los entrenamientos registrados
+        endpoint_entrenamiento = f"/rutinasEntrenamiento"
+        headers = {'Content-Type': 'application/json',
+                   "Authorization": "Bearer {}".format(self.token)}
+        resultado_nueva_rutina = self.client.post(endpoint_entrenamiento, data=json.dumps(registrar_entrenamiento), headers=headers)
+
+        print(resultado_nueva_rutina)
+        self.assertEqual("proceso exitoso", resultado_nueva_rutina['res'])
+
+
