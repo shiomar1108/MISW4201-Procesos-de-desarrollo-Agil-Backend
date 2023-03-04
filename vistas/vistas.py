@@ -321,7 +321,6 @@ class VistaRutina(Resource):
     def get(self, id_rutina):        
         return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
 
-
 class VistaRutinaDiferente(Resource):
     @jwt_required()
     def get(self, id_rutina):
@@ -353,5 +352,44 @@ class VistaRutinasEntrenamiento(Resource):
                                       AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
               
         return [rutina_schema.dump(rutina) for rutina in rutinas]
+
+
+    @jwt_required()
+    def post(self):
+#        print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
+#        print(request.json)
+#        idRutina = request.json["idRutina"]
+#        fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date()
+#        idPersona = request.json["idPersona"]
+#        entrenamientos = request.json["entrenamientos"]
+#        print(idRutina)
+#        print(fecha)
+#        print(idPersona)
+#        print(entrenamientos)
+#        
+#        for entrenamiento in entrenamientos:
+#            repeticiones = entrenamiento['repeticiones']            
+#            nuevo_entrenamiento = Entrenamiento(
+#                tiempo=datetime.strptime(
+#                    entrenamiento["tiempo"], '%H:%M:%S').time(),
+#                repeticiones=entrenamiento["repeticiones"], 
+#                fecha=fecha,
+#                ejercicio=entrenamiento["ejercicio"],
+#                persona=idPersona,
+#                rutina=idRutina                
+#            )
+#            print("---------------")
+#            print(nuevo_entrenamiento)
+#            db.session.add(nuevo_entrenamiento)
+#            db.session.commit()
+#            print("---------------COMIT")
+        
+#        data =  "Se realiza la creación exitosa"
+
+        # Creating a dictionary
+        response = {"mensaje": "proceso exitoso"}
+        return response, 200
+
+
 
 
