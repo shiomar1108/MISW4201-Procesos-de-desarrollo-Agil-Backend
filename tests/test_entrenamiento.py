@@ -145,6 +145,6 @@ class TestEntrenamiento(TestCase):
         resultado_nueva_rutina = self.client.post(endpoint_entrenamiento, data=json.dumps(registrar_entrenamiento), headers=headers)
 
         print(resultado_nueva_rutina)
-        self.assertEqual("proceso exitoso", resultado_nueva_rutina['resultado'])
+        self.assertEqual("proceso exitoso", resultado_nueva_rutina['res'])
 
 
