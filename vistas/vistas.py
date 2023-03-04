@@ -6,6 +6,7 @@ from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
 from json import dumps
+from itertools import groupby
 
 from modelos import \
     db, \
@@ -25,12 +26,12 @@ rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
 
-
 class VistaSignIn(Resource):
 
     def post(self):
         usuario = Usuario.query.filter(
             Usuario.usuario == request.json["usuario"]).first()
+        print(usuario)
         if usuario is None:
             contrasena_encriptada = hashlib.md5(
                 request.json["contrasena"].encode('utf-8')).hexdigest()
@@ -101,27 +102,63 @@ class VistaPersonas(Resource):
 
     @jwt_required()
     def post(self, id_usuario):
-        usuario = Usuario.query.get_or_404(id_usuario)
-        nueva_persona = Persona(
-            nombre=request.json["nombre"],
-            apellido=request.json["apellido"],
-            talla=float(request.json["talla"]),
-            peso=float(request.json["peso"]),
-            edad=float(request.json["edad"]),
-            ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
-            brazo=float(request.json["brazo"]),
-            pecho=float(request.json["pecho"]),
-            cintura=float(request.json["cintura"]),
-            pierna=float(request.json["pierna"]),
-            entrenando=bool(request.json["entrenando"]),
-            razon=request.json["razon"],
-            terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
-            entrenador=id_usuario
-        )
-        db.session.add(nueva_persona)
-        db.session.commit()
-        return persona_schema.dump(nueva_persona)
-
+        if "usuario" and "contrasena" in request.json:
+            usuarioACrear = request.json["usuario"]
+            usuario = Usuario.query.filter(Usuario.usuario == usuarioACrear).first()
+            # Validamos si el usuario ya esta registrado
+            if usuario is None:
+                # Creación del usuario
+                contrasena_encriptada = hashlib.md5(
+                    request.json["contrasena"].encode('utf-8')).hexdigest()
+                nuevo_usuario = Usuario(
+                        usuario=usuarioACrear, contrasena=contrasena_encriptada, rol="CLI")
+                db.session.add(nuevo_usuario)
+                db.session.commit()
+                # Creación del cliente
+                nueva_persona = Persona(
+                    nombre=request.json["nombre"],
+                    apellido=request.json["apellido"],
+                    talla=float(request.json["talla"]),
+                    peso=float(request.json["peso"]),
+                    edad=float(request.json["edad"]),
+                    ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
+                    brazo=float(request.json["brazo"]),
+                    pecho=float(request.json["pecho"]),
+                    cintura=float(request.json["cintura"]),
+                    pierna=float(request.json["pierna"]),
+                    entrenando=bool(request.json["entrenando"]),
+                    razon=request.json["razon"],
+                    terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
+                    usuario=nuevo_usuario.id,
+                    entrenador=id_usuario
+                )
+                db.session.add(nueva_persona)
+                db.session.commit()
+                return persona_schema.dump(nueva_persona)
+            else:
+                return "El usuario ya existe", 409
+        else:
+            # Creación del cliente
+                nueva_persona = Persona(
+                    nombre=request.json["nombre"],
+                    apellido=request.json["apellido"],
+                    talla=float(request.json["talla"]),
+                    peso=float(request.json["peso"]),
+                    edad=float(request.json["edad"]),
+                    ingreso=datetime.strptime(request.json["ingreso"], '%Y-%m-%d'),
+                    brazo=float(request.json["brazo"]),
+                    pecho=float(request.json["pecho"]),
+                    cintura=float(request.json["cintura"]),
+                    pierna=float(request.json["pierna"]),
+                    entrenando=bool(request.json["entrenando"]),
+                    razon=request.json["razon"],
+                    terminado=datetime.strptime(request.json["terminado"], '%Y-%m-%d'),
+                    entrenador=id_usuario
+                )
+                db.session.add(nueva_persona)
+                db.session.commit()
+                return persona_schema.dump(nueva_persona)
+        
 
 class VistaPersona(Resource):
     @jwt_required()
@@ -295,8 +332,25 @@ class VistaEntrenadores(Resource):
         entrenadores = [usuario_schema.dump(
             usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
         entrenadores_list = [val['id'] for val in entrenadores]
-        print(entrenadores_list)
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
+
+
+class VistaEntrenador(Resource):
+    @jwt_required()
+    def delete(self, id_usuario):
+        personas = Persona.query.filter_by(entrenador=id_usuario).all()
+        if len(personas) == 0:
+             # Se elimina la persona
+            persona = Persona.query.filter_by(usuario=id_usuario).first()
+            db.session.delete(persona)
+            db.session.commit()
+            # Se elimina el usuario
+            usuario = Usuario.query.get_or_404(id_usuario)
+            db.session.delete(usuario)
+            db.session.commit()
+            return '', 204
+        else:
+            return 'El entrenador tienen clientes asociados', 409
 
 
 class VistaRutinas(Resource):
@@ -348,11 +402,18 @@ class VistaRutinaEjercicio(Resource):
 class VistaRutinasEntrenamiento(Resource):    
     @jwt_required()
     def get(self):        
-        rutinas = db.session.execute('SELECT Q1.* FROM RUTINA AS Q1, (SELECT RUTINA_ID, COUNT(RUTINA_ID) AS TOTAL_EJERCICIOS FROM RUTINA_EJERCICIO GROUP BY RUTINA_ID) \
-                                      AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
+        sql_rutinas = db.session.execute('SELECT Q1.ID FROM RUTINA AS Q1, (SELECT RUTINA_ID, COUNT(RUTINA_ID) AS TOTAL_EJERCICIOS FROM RUTINA_EJERCICIO GROUP BY RUTINA_ID) \
+                                          AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
               
-        return [rutina_schema.dump(rutina) for rutina in rutinas]
+        id_rutinas = sql_rutinas.scalars().all()  
+        rutinas = db.session.query(Rutina).all()
+        rutinasEntrenamiento = []
+        for rutina in rutinas:
+            if rutina.id in id_rutinas:
+                rutinasEntrenamiento.append(rutina)
 
+        return [rutina_schema.dump(rutina) for rutina in rutinasEntrenamiento]
+    
 
     @jwt_required()
     def post(self):
@@ -391,4 +452,39 @@ class VistaRutinasEntrenamiento(Resource):
 
 
 
+class VistaRutinaEntrenamientoPersona(Resource):
+    @jwt_required()
+    def get(self,id_persona):
+        persona = Persona.query.get_or_404(id_persona)
+        entrenamientorutina_array = []
+        for entrenamiento in persona.entrenamientos:
+            ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
+            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
+            if entrenamiento_schema_dump['rutina'] != None:
+              entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
+              entrenamientorutina_array.append(entrenamiento_schema_dump)
+        
+        result = []
+        key_function = lambda x: (x["fecha"], x["rutina"], x["persona"])
+        entrenamientorutina_array.sort(key = key_function)
+        for group, entrenamientos in groupby(entrenamientorutina_array, key_function):
+                user = {
+                        "fecha": group[0],
+                        "rutina": rutina_schema.dump(Rutina.query.get_or_404(group[1])),
+                        "persona": group[2],
+                        "repeticionesTotales": 0,
+                        "tiempoTotal": "00:00:00",
+                        "entrenamientos": []
+                }
+                ttoal = [0,0,0]
+                for entrenamiento in entrenamientos:
+                    user["repeticionesTotales"] += int(float(entrenamiento["repeticiones"]))
+                    arr = entrenamiento["tiempo"].split(':')
+                    ttoal[0] += int(arr[0])
+                    ttoal[1] += int(arr[1])
+                    ttoal[2] += int(arr[2])
+                    user["entrenamientos"].append(entrenamiento)
+                user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
+                result.append(user)
+        return [entrenamientoRutina for entrenamientoRutina in result]
 
