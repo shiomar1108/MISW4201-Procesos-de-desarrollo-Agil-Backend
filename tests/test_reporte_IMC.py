@@ -38,23 +38,23 @@ class TestReporteIMC(unittest.TestCase):
         self.usuario_id = respuesta_login["id"]        
         
         
-    def tearDown(self):
-        entrenamientos = db.session.query(Entrenamiento).all()
-        for entrenamiento in entrenamientos:
-            db.session.delete(entrenamiento)
-            db.session.commit()
-        rutinas = db.session.query(Rutina).all()
-        for rutina in rutinas:
-            db.session.delete(rutina)
-            db.session.commit()
-        ejercicios = db.session.query(Ejercicio).all()
-        for ejercicio in ejercicios:
-            db.session.delete(ejercicio)
-            db.session.commit() 
-        usuarios = db.session.query(Usuario).all()           
-        for usuario in usuarios:
-            db.session.delete(usuario)
-            db.session.commit()
+    # def tearDown(self):
+    #     entrenamientos = db.session.query(Entrenamiento).all()
+    #     for entrenamiento in entrenamientos:
+    #         db.session.delete(entrenamiento)
+    #         db.session.commit()
+    #     rutinas = db.session.query(Rutina).all()
+    #     for rutina in rutinas:
+    #         db.session.delete(rutina)
+    #         db.session.commit()
+    #     ejercicios = db.session.query(Ejercicio).all()
+    #     for ejercicio in ejercicios:
+    #         db.session.delete(ejercicio)
+    #         db.session.commit() 
+    #     usuarios = db.session.query(Usuario).all()           
+    #     for usuario in usuarios:
+    #         db.session.delete(usuario)
+    #         db.session.commit()
 
 
 
@@ -87,31 +87,27 @@ class TestReporteIMC(unittest.TestCase):
             rutina1.ejercicios.append(self.ejercicio[-1])
             db.session.commit()
         
-        #Crear Entrenamiento para rutina1
-        entrenamientoRutina = Entrenamiento(fecha=datetime.now(), persona=self.usuario_id, repeticiones=random.randint(5,10))
-        db.session.add(entrenamientoRutina)
-        db.session.commit()
+        #Crear Entrenamiento para ejercicios de rutina1
+        for i in range(len(rutina1.ejercicios)):
+            entrenamientoRutina = Entrenamiento(fecha=datetime.now(), persona=self.usuario_id, ejercicio=rutina1.ejercicios[i].id, repeticiones=random.randint(5,10))
+            db.session.add(entrenamientoRutina)
+            db.session.commit()            
+            #Asociar rutina a entrenamiento1
+            rutina1.entrenamientos.append(entrenamientoRutina)
+            db.session.commit()
 
-        #Asociar rutina a entrenamiento1
-        rutina1.entrenamientos.append(entrenamientoRutina)
-        db.session.commit()
 
         #Crear Entrenamiento para ejercicios
         ejercicios = db.session.query(Ejercicio).all()        
-        entrenamientoEjercicio1 = Entrenamiento(fecha=datetime.now()+timedelta(days=1), persona=self.usuario_id, repeticiones=random.randint(5,10))
-        #Asociar ejercicio1 a entrenamiento
-        ejercicios[0].entrenamientos.append(entrenamientoEjercicio1)
-        db.session.commit()
+        for i in range(len(ejercicios)):
+            entrenamientoEjercicio = Entrenamiento(fecha=datetime.now()+timedelta(days=1), persona=self.usuario_id, repeticiones=random.randint(5,10))
+            db.session.add(entrenamientoEjercicio)
+            db.session.commit()
+            #Asociar ejercicio a entrenamiento
+            ejercicios[i].entrenamientos.append(entrenamientoEjercicio)
+            db.session.commit()
           
-        entrenamientoEjercicio2 = Entrenamiento(fecha=datetime.now()+timedelta(days=1), persona=self.usuario_id, repeticiones=random.randint(5,10))
-        #Asociar ejercicio2 a entrenamiento
-        ejercicios[1].entrenamientos.append(entrenamientoEjercicio2)
-        db.session.commit()
-
-        entrenamientoEjercicio3 = Entrenamiento(fecha=datetime.now()+timedelta(days=1), persona=self.usuario_id, repeticiones=random.randint(5,10))
-        #Asociar ejercicio3 a entrenamiento
-        ejercicios[2].entrenamientos.append(entrenamientoEjercicio3)
-        db.session.commit()        
+       
 
         #Definir endpoint, encabezados y hacer el llamado
         endpoint_resultadosEntrenamientos = "/resultadosEntrenamientos" 
