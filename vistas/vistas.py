@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, jsonify
 from flask_jwt_extended import jwt_required, create_access_token
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
@@ -434,3 +434,18 @@ class VistaRutinaEntrenamientoPersona(Resource):
                 user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
                 result.append(user)
         return [entrenamientoRutina for entrenamientoRutina in result]
+    
+
+class VistaResultadosEntrenamientos(Resource):
+    @jwt_required()
+    def get(self):
+        sql_resultados = db.session.execute("SELECT T1.fecha, T1.[Tipo de Entrenamiento], SUM(repeticiones) AS [Repeticiones Ejecutadas], SUM(T1.[Total Calorias]) AS [Calorias Consumidas] \
+                                            FROM (SELECT ENTR.Fecha, 'Ejercicio' AS [Tipo de Entrenamiento], ENTR.repeticiones, EJER.calorias AS calorias_por_repeticion, ENTR.repeticiones*EJER.calorias AS [Total Calorias] \
+                                            FROM ENTRENAMIENTO AS ENTR, EJERCICIO AS EJER WHERE ENTR.RUTINA IS NULL AND ENTR.EJERCICIO=EJER.ID) AS T1 GROUP BY T1.Fecha, T1.[Tipo de Entrenamiento] \
+                                            UNION SELECT T1.fecha, T1.[Tipo de Entrenamiento], SUM(repeticiones) AS [Repeticiones Ejecutadas], SUM(T1.[Total Calorias]) AS [Calorias Consumidas] \
+                                            FROM (SELECT ENTR.Fecha, 'Rutina' AS [Tipo de Entrenamiento], ENTR.repeticiones, EJER.calorias AS calorias_por_repeticion, ENTR.repeticiones*EJER.calorias AS [Total Calorias] \
+                                            FROM ENTRENAMIENTO AS ENTR, EJERCICIO AS EJER WHERE ENTR.RUTINA IS NOT NULL AND ENTR.EJERCICIO=EJER.ID) AS T1 GROUP BY T1.Fecha, T1.[Tipo de Entrenamiento] ORDER BY fecha, [Tipo de Entrenamiento]")
+        
+        
+        return jsonify([dict(registro) for registro in sql_resultados])
+    

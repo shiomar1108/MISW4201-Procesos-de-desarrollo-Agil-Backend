@@ -38,23 +38,23 @@ class TestReporteIMC(unittest.TestCase):
         self.usuario_id = respuesta_login["id"]        
         
         
-    # def tearDown(self):
-    #     entrenamientos = db.session.query(Entrenamiento).all()
-    #     for entrenamiento in entrenamientos:
-    #         db.session.delete(entrenamiento)
-    #         db.session.commit()
-    #     rutinas = db.session.query(Rutina).all()
-    #     for rutina in rutinas:
-    #         db.session.delete(rutina)
-    #         db.session.commit()
-    #     ejercicios = db.session.query(Ejercicio).all()
-    #     for ejercicio in ejercicios:
-    #         db.session.delete(ejercicio)
-    #         db.session.commit() 
-    #     usuarios = db.session.query(Usuario).all()           
-    #     for usuario in usuarios:
-    #         db.session.delete(usuario)
-    #         db.session.commit()
+    def tearDown(self):
+        entrenamientos = db.session.query(Entrenamiento).all()
+        for entrenamiento in entrenamientos:
+            db.session.delete(entrenamiento)
+            db.session.commit()
+        rutinas = db.session.query(Rutina).all()
+        for rutina in rutinas:
+            db.session.delete(rutina)
+            db.session.commit()
+        ejercicios = db.session.query(Ejercicio).all()
+        for ejercicio in ejercicios:
+            db.session.delete(ejercicio)
+            db.session.commit() 
+        usuarios = db.session.query(Usuario).all()           
+        for usuario in usuarios:
+            db.session.delete(usuario)
+            db.session.commit()
 
 
 
@@ -117,9 +117,58 @@ class TestReporteIMC(unittest.TestCase):
                                                          headers=headers)
 
                
+        #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
+        datos_respuesta_resultadosEntrenamientos = json.loads(resultado_resultadosEntrenamientos.get_data())
+        
 
         #Verificar que el llamado fue exitoso
         self.assertEqual(resultado_resultadosEntrenamientos.status_code, 200)
+        
+        
+        #Calculo de repeticiones ejecutadas por ejercicios pertenecientes a tipo de entrenamiento Rutina        
+        entrenamientos = db.session.query(Entrenamiento).all()
+        repeticionesRutinas = 0
+        caloriasRutinas = 0
+        for entrenamiento in entrenamientos:
+            if entrenamiento.rutina is not None:
+                repeticionesRutinas = repeticionesRutinas + entrenamiento.repeticiones
+                #Calculo calorias consumidas por ejercicios pertenecientes a tipo de entrenamiento Rutina
+                ejercicio = db.session.query(Ejercicio).get(entrenamiento.ejercicio)
+                caloriasRutinas = caloriasRutinas + entrenamiento.repeticiones*ejercicio.calorias
+        
+        #Calculo de repeticiones ejecutadas por ejercicios pertenecientes a tipo de entrenamiento Ejercicio        
+        entrenamientos = db.session.query(Entrenamiento).all()
+        repeticionesEjercicios = 0
+        caloriasEjercicios = 0
+        for entrenamiento in entrenamientos:
+            if entrenamiento.rutina is None:
+                repeticionesEjercicios = repeticionesEjercicios + entrenamiento.repeticiones
+                #Calculo calorias consumidas por ejercicios pertenecientes a tipo de entrenamiento Ejercicio
+                ejercicio = db.session.query(Ejercicio).get(entrenamiento.ejercicio)
+                caloriasEjercicios = caloriasEjercicios + entrenamiento.repeticiones*ejercicio.calorias
+
+        
+        #Verificar resultados de entrenamiento tipo Rutina
+        for i in range(len(datos_respuesta_resultadosEntrenamientos)):
+            if datos_respuesta_resultadosEntrenamientos[0]['Tipo de Entrenamiento'] == 'Rutina':
+                self.assertEqual(repeticionesRutinas, datos_respuesta_resultadosEntrenamientos[0]['Repeticiones Ejecutadas'])
+                self.assertEqual(caloriasRutinas, datos_respuesta_resultadosEntrenamientos[0]['Calorias Consumidas'])
+            else:   
+                self.assertEqual(repeticionesRutinas, datos_respuesta_resultadosEntrenamientos[1]['Repeticiones Ejecutadas'])
+                self.assertEqual(caloriasRutinas, datos_respuesta_resultadosEntrenamientos[1]['Calorias Consumidas'])
+
+        #Verificar resultados de entrenamiento tipo Ejercicio
+        for i in range(len(datos_respuesta_resultadosEntrenamientos)):
+            if datos_respuesta_resultadosEntrenamientos[0]['Tipo de Entrenamiento'] == 'Ejercicio':
+                self.assertEqual(repeticionesEjercicios, datos_respuesta_resultadosEntrenamientos[0]['Repeticiones Ejecutadas'])
+                self.assertEqual(caloriasEjercicios, datos_respuesta_resultadosEntrenamientos[0]['Calorias Consumidas'])
+            else:   
+                self.assertEqual(repeticionesEjercicios, datos_respuesta_resultadosEntrenamientos[1]['Repeticiones Ejecutadas'])
+                self.assertEqual(caloriasEjercicios, datos_respuesta_resultadosEntrenamientos[1]['Calorias Consumidas'])
+        
+        print(datos_respuesta_resultadosEntrenamientos)
+
+       
 
 
         

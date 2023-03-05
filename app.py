@@ -10,7 +10,7 @@ from vistas import \
 	VistaEjercicio, VistaEjercicios, \
 	VistaEntrenamiento, VistaEntrenamientos, \
   VistaRutinas, VistaRutina,VistaRutinaDiferente, VistaEntrenadores, \
-  VistaRutinasEntrenamiento, VistaReporte, VistaRutinaEjercicio
+  VistaRutinasEntrenamiento, VistaReporte, VistaRutinaEjercicio, VistaResultadosEntrenamientos
 from vistas.vistas import VistaRutinaEntrenamientoPersona
 
 
@@ -45,6 +45,7 @@ api.add_resource(VistaRutinaDiferente, '/rutina/<int:id_rutina>/diferente')
 api.add_resource(VistaRutinaEjercicio, '/rutina/<int:id_rutina>/ejercicio/<int:id_ejercicio>')
 api.add_resource(VistaRutinasEntrenamiento, '/rutinasEntrenamiento')
 api.add_resource(VistaRutinaEntrenamientoPersona, '/rutinasEntrenamientoPersona/<int:id_persona>')
+api.add_resource(VistaResultadosEntrenamientos, '/resultadosEntrenamientos')
 
 jwt = JWTManager(app)
 
