@@ -99,7 +99,7 @@ class TestRutinaEndPoint(unittest.TestCase):
         self.client = app.test_client()
         
         nombre_usuario = 'test_' + self.data_factory.name()
-        contrasena = 'T1$' + self.data_factory.word()
+        contrasena = 'Ta1$' + self.data_factory.word()
         contrasena_encriptada = hashlib.md5(contrasena.encode('utf-8')).hexdigest()
         
         # Se crea el usuario para identificarse en la aplicación

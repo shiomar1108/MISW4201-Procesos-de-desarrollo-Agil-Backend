@@ -7,6 +7,7 @@ from .utilidad_reporte import UtilidadReporte
 import hashlib
 from json import dumps
 from itertools import groupby
+import re
 
 from modelos import \
     db, \
@@ -29,35 +30,40 @@ reporte_detallado_schema = ReporteDetalladoSchema()
 class VistaSignIn(Resource):
 
     def post(self):
-        usuario = Usuario.query.filter(
-            Usuario.usuario == request.json["usuario"]).first()
-        print(usuario)
-        if usuario is None:
-            contrasena_encriptada = hashlib.md5(
-                request.json["contrasena"].encode('utf-8')).hexdigest()
-            if not "rol" in request.json:
-                nuevo_usuario = Usuario(
-                    usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol="ENT")
-            else:
-                nuevo_usuario = Usuario(
-                    usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol=request.json["rol"])
-            db.session.add(nuevo_usuario)
-            db.session.commit()
-
-            # Creacion de entrenador
-            if nuevo_usuario.rol == "ENT":
-                nueva_persona = Persona(
-                    nombre=request.json["nombre"],
-                    apellido=request.json["apellido"],
-                    usuario=nuevo_usuario.id,
-                    entrenando=False
-                )
-                db.session.add(nueva_persona)
+        pattern = re.compile("(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z0-9].{7,}")
+        contrasena_val =  request.json["contrasena"]
+        if pattern.match(contrasena_val) :
+            usuario = Usuario.query.filter(
+                Usuario.usuario == request.json["usuario"]).first()
+            print(usuario)
+            if usuario is None:
+                contrasena_encriptada = hashlib.md5(
+                    request.json["contrasena"].encode('utf-8')).hexdigest()
+                if not "rol" in request.json:
+                    nuevo_usuario = Usuario(
+                        usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol="ENT")
+                else:
+                    nuevo_usuario = Usuario(
+                        usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol=request.json["rol"])
+                db.session.add(nuevo_usuario)
                 db.session.commit()
 
-            return {"mensaje": "usuario creado exitosamente", "id": nuevo_usuario.id}
+                # Creacion de entrenador
+                if nuevo_usuario.rol == "ENT":
+                    nueva_persona = Persona(
+                        nombre=request.json["nombre"],
+                        apellido=request.json["apellido"],
+                        usuario=nuevo_usuario.id,
+                        entrenando=False
+                    )
+                    db.session.add(nueva_persona)
+                    db.session.commit()
+
+                return {"mensaje": "usuario creado exitosamente", "id": nuevo_usuario.id}
+            else:
+                return "El usuario ya existe", 409
         else:
-            return "El usuario ya existe", 409
+            return "Contrasena invalida", 409
 
     def put(self, id_usuario):
         usuario = Usuario.query.get_or_404(id_usuario)

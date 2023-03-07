@@ -37,15 +37,13 @@ class TestPersona(TestCase):
         nombre_entrenador = self.data_factory.name()
         apellido_entrenador = self.data_factory.name()
         usuario = "test_" + self.data_factory.name()
-        contrasena = "T1$" + self.data_factory.word()
-        contrasena_encriptada = hashlib.md5(
-            contrasena.encode("utf-8")).hexdigest()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_persona = {
             "nombre": nombre_entrenador,
             "apellido": apellido_entrenador,
             "usuario": usuario,
-            "contrasena": contrasena_encriptada,
+            "contrasena": contrasena,
             "rol": "ENT"
         }
         # Se genera el consumo del API para la creacion del entrenador
@@ -76,15 +74,13 @@ class TestPersona(TestCase):
         nombre_entrenador = self.data_factory.name()
         apellido_entrenador = self.data_factory.name()
         usuario = "test_" + self.data_factory.name()
-        contrasena = "T1$" + self.data_factory.word()
-        contrasena_encriptada = hashlib.md5(
-            contrasena.encode("utf-8")).hexdigest()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_persona = {
             "nombre": nombre_entrenador,
             "apellido": apellido_entrenador,
             "usuario": usuario,
-            "contrasena": contrasena_encriptada,
+            "contrasena": contrasena,
             "rol": "ENT"
         }
         # Se genera el consumo del API para la creacion del nuevo entrenador
@@ -114,15 +110,13 @@ class TestPersona(TestCase):
         apellido_entrenador = self.data_factory.name()
         usuario = "test_" + self.data_factory.name()
         rol = "ENT"
-        contrasena = "T1$" + self.data_factory.word()
-        contrasena_encriptada = hashlib.md5(
-            contrasena.encode("utf-8")).hexdigest()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_persona = {
             "nombre": nombre_entrenador,
             "apellido": apellido_entrenador,
             "usuario": usuario,
-            "contrasena": contrasena_encriptada,
+            "contrasena": contrasena,
             "rol": rol
         }
         # Se genera el consumo del API para la creacion del nuevo entrenador
@@ -147,7 +141,7 @@ class TestPersona(TestCase):
         # Se Crea objeto login request
         nueva_login = {
             "usuario": usuario,
-            "contrasena": contrasena_encriptada
+            "contrasena": contrasena
         }
 
         # Se genera el consumo del API para login del entrenador
@@ -172,8 +166,7 @@ class TestPersona(TestCase):
     def test_crear_cliente(self):
         # Se generan los datos para crear el entrenador
         usuario = "test_" + self.data_factory.first_name()
-        contrasena = "T1$" + self.data_factory.last_name()
-        # Se forma la esctructura del request
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)        # Se forma la esctructura del request
         nueva_entrenador = {
             "nombre": self.data_factory.name(),
             "apellido": self.data_factory.name(),
