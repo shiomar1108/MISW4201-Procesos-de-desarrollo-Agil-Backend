@@ -110,7 +110,7 @@ class TestReporteIMC(unittest.TestCase):
        
 
         #Definir endpoint, encabezados y hacer el llamado
-        endpoint_resultadosEntrenamientos = "/resultadosEntrenamientos" 
+        endpoint_resultadosEntrenamientos = "/resultadosEntrenamientos/" + str(self.usuario_id) 
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer {}".format(self.token)}
         
         resultado_resultadosEntrenamientos = self.client.get(endpoint_resultadosEntrenamientos,
