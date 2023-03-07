@@ -368,13 +368,20 @@ class VistaRutinas(Resource):
 
     @jwt_required()
     def post(self):
+        rutinas_creadas = Rutina.query.all()
         nueva_rutina = Rutina(
             nombre=request.json["nombre"],
             descripcion=request.json["descripcion"],
         )
+        for rutina in rutinas_creadas:
+            if rutina.nombre.lower() == nueva_rutina.nombre.lower():
+                return "La Rutina ya existe", 409 
         db.session.add(nueva_rutina)
         db.session.commit()
         return rutina_schema.dump(nueva_rutina)
+            
+        
+        
     
 class VistaRutina(Resource):
     @jwt_required()
