@@ -18,14 +18,13 @@ class TestEntrenadores(TestCase):
         self.nombre_entrenador = self.data_factory.name()
         self.apellido_entrenador = self.data_factory.name()
         usuario = "test_" + self.data_factory.name()
-        contrasena = "T1$" + self.data_factory.word()
-        contrasena_encriptada = hashlib.md5(contrasena.encode("utf-8")).hexdigest()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_persona = {
             "nombre": self.nombre_entrenador,
             "apellido": self.apellido_entrenador,
             "usuario": usuario,
-            "contrasena": contrasena_encriptada,
+            "contrasena": contrasena,
             "rol": "ENT",
         }
         # Se genera el consumo del API para la creacion del entrenador
@@ -38,7 +37,7 @@ class TestEntrenadores(TestCase):
         self.assertEqual(solicitud_creacion.status_code, 200)
         usuario_login = {
             "usuario": usuario,
-            "contrasena": contrasena_encriptada
+            "contrasena": contrasena
         }
         solicitud_login = self.client.post("/login",
                                                 data=json.dumps(usuario_login),
@@ -80,7 +79,7 @@ class TestEntrenadores(TestCase):
     def test_eliminar_entrenador(self):
         # Se generan los datos para crear el entrenador
         usuario = "test_" + self.data_factory.first_name()
-        contrasena = "T1$" + self.data_factory.last_name()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_entrenador = {
             "nombre": self.data_factory.name(),
@@ -124,7 +123,7 @@ class TestEntrenadores(TestCase):
     def test_eliminar_entrenador_con_clientes(self):
         # Se generan los datos para crear el entrenador
         usuario = "test_" + self.data_factory.first_name()
-        contrasena = "T1$" + self.data_factory.last_name()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_entrenador = {
             "nombre": self.data_factory.name(),

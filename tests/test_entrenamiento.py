@@ -19,7 +19,7 @@ class TestEntrenamiento(TestCase):
         nombre_entrenador = self.data_factory.name()
         apellido_entrenador = self.data_factory.name()
         usuario = "test_" + self.data_factory.first_name()
-        contrasena = "T1$" + self.data_factory.last_name()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
         # Se forma la esctructura del request
         nueva_persona = {
             "nombre": nombre_entrenador,
@@ -132,7 +132,7 @@ class TestEntrenamiento(TestCase):
         self.client = app.test_client()
         
         nombre_usuario = 'test_' + self.data_factory.name()
-        contrasena = 'T1$' + self.data_factory.word()
+        contrasena = 'Ta1$' + self.data_factory.word()
         contrasena_encriptada = hashlib.md5(contrasena.encode('utf-8')).hexdigest()
 
         registrar_entrenamiento = "{'idRutina': '1', 'fecha': '2023-03-02', 'idPersona': '1', 'entrenamientos': [{'tiempo': '00:10:10', 'repeticiones': '3', 'ejercicio': '1'}, {'tiempo': '00:10:10', 'repeticiones': '3', 'ejercicio': '1'}]}"
