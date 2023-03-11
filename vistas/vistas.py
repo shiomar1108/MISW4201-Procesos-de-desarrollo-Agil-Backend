@@ -35,7 +35,6 @@ class VistaSignIn(Resource):
         if pattern.match(contrasena_val) :
             usuario = Usuario.query.filter(
                 Usuario.usuario == request.json["usuario"]).first()
-            print(usuario)
             if usuario is None:
                 contrasena_encriptada = hashlib.md5(
                     request.json["contrasena"].encode('utf-8')).hexdigest()
@@ -86,10 +85,8 @@ class VistaLogIn(Resource):
     def post(self):
         contrasena_encriptada = hashlib.md5(
             request.json["contrasena"].encode('utf-8')).hexdigest()
-        print(contrasena_encriptada)
         usuario = Usuario.query.filter(Usuario.usuario == request.json["usuario"],
                                        Usuario.contrasena == contrasena_encriptada).first()
-        print(usuario)
         rol = usuario.rol
         db.session.commit()
         if usuario is None:
@@ -241,7 +238,6 @@ class VistaEntrenamientos(Resource):
 
     @jwt_required()
     def post(self, id_persona):
-        print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
         nuevo_entrenamiento = Entrenamiento(
             tiempo=datetime.strptime(
                 request.json["tiempo"], '%H:%M:%S').time(),
@@ -408,16 +404,10 @@ class VistaRutinasEntrenamiento(Resource):
 
     @jwt_required()
     def post(self):
-        print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
-        print(request.json)
         idRutina = request.json["idRutina"]
         fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date()
         idPersona = request.json["idPersona"]
         entrenamientos = request.json["entrenamientos"]
-        print(idRutina)
-        print(fecha)
-        print(idPersona)
-        print(entrenamientos)
         
         for entrenamiento in entrenamientos:
             repeticiones = entrenamiento['repeticiones']            
@@ -430,11 +420,8 @@ class VistaRutinasEntrenamiento(Resource):
                 persona=idPersona,
                 rutina=idRutina                
             )
-            print("---------------")
-            print(nuevo_entrenamiento)
             db.session.add(nuevo_entrenamiento)
             db.session.commit()
-            print("---------------COMIT")
         
         data =  "Se realiza la creación exitosa"
         # Creating a dictionary
