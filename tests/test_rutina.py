@@ -280,15 +280,12 @@ class TestRutinaEndPoint(unittest.TestCase):
                     video=data[-1][2],
                     calorias=data[-1][3]
                 ))
-            #print('ejercicios............................')
             db.session.add(ejercicio[-1])
             db.session.commit()
 
 
         ejercicios = db.session.query(Ejercicio).all()
         for i in range(0, len(ejercicios)):
-            #print('ejercicios............................')
-            print(ejercicios[i])
             rutina.ejercicios.append(ejercicios[i])
             db.session.commit()
         
@@ -300,9 +297,7 @@ class TestRutinaEndPoint(unittest.TestCase):
                                                    headers=headers)
 
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
-        datos_respuesta_rutina = json.loads(resultado_consulta_rutina.get_data())
-        #print('resutado =======')
-        #print(datos_respuesta_rutina)        
+        datos_respuesta_rutina = json.loads(resultado_consulta_rutina.get_data())        
         rutina = Rutina.query.get(datos_respuesta_rutina['id'])
         self.assertEqual(ejercicios, rutina.ejercicios )
 
@@ -408,16 +403,13 @@ class TestRutinaEndPoint(unittest.TestCase):
                     descripcion=data[-1][1],
                     video=data[-1][2],
                     calorias=data[-1][3]
-                ))
-            #print('ejercicios............................')
+                ))            
             db.session.add(ejercicio[-1])
             db.session.commit()
 
 
         ejercicios = db.session.query(Ejercicio).all()
         for i in range(0, len(ejercicios)):
-            #print('ejercicios............................')
-            print(ejercicios[i])
             rutina.ejercicios.append(ejercicios[i])
             db.session.commit()
 
@@ -437,7 +429,6 @@ class TestRutinaEndPoint(unittest.TestCase):
                     video=data[-1][2],
                     calorias=data[-1][3]
                 ))
-            #print('ejercicios............................')
             db.session.add(ejercicio2[-1])
             db.session.commit()
 
@@ -450,8 +441,6 @@ class TestRutinaEndPoint(unittest.TestCase):
 
         #Obtener los datos de respuesta y dejarlos un objeto json y en el objeto a comparar
         datos_respuesta_rutina_ejercicios = json.loads(resultado_consulta_rutina.get_data())
-        print("== == == == == == == == == == == = ")
-        print(datos_respuesta_rutina_ejercicios)
         self.assertEqual(len(ejercicio2), len(datos_respuesta_rutina_ejercicios) )
 
 

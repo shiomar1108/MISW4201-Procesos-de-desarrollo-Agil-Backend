@@ -166,7 +166,7 @@ class TestReporteIMC(unittest.TestCase):
                 self.assertEqual(repeticionesEjercicios, datos_respuesta_resultadosEntrenamientos[1]['Repeticiones Ejecutadas'])
                 self.assertEqual(caloriasEjercicios, datos_respuesta_resultadosEntrenamientos[1]['Calorias Consumidas'])
         
-        print(datos_respuesta_resultadosEntrenamientos)
+        
 
        
 

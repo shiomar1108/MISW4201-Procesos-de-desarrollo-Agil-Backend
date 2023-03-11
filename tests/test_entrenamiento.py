@@ -143,7 +143,6 @@ class TestEntrenamiento(TestCase):
                    "Authorization": "Bearer {}".format(self.token)}
         resultado_nueva_rutina = self.client.post(endpoint_entrenamiento, data=json.dumps(registrar_entrenamiento), headers=headers)
 
-        print(resultado_nueva_rutina)
         self.assertEqual("proceso exitoso", resultado_nueva_rutina['res'])
 
 
