@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, jsonify
 from flask_jwt_extended import jwt_required, create_access_token
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +6,8 @@ from datetime import datetime
 from .utilidad_reporte import UtilidadReporte
 import hashlib
 from json import dumps
+from itertools import groupby
+import re
 
 from modelos import \
     db, \
@@ -25,38 +27,42 @@ rutina_schema = RutinaSchema()
 reporte_general_schema = ReporteGeneralSchema()
 reporte_detallado_schema = ReporteDetalladoSchema()
 
-
 class VistaSignIn(Resource):
 
     def post(self):
-        usuario = Usuario.query.filter(
-            Usuario.usuario == request.json["usuario"]).first()
-        if usuario is None:
-            contrasena_encriptada = hashlib.md5(
-                request.json["contrasena"].encode('utf-8')).hexdigest()
-            if not "rol" in request.json:
-                nuevo_usuario = Usuario(
-                    usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol="ENT")
-            else:
-                nuevo_usuario = Usuario(
-                    usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol=request.json["rol"])
-            db.session.add(nuevo_usuario)
-            db.session.commit()
-
-            # Creacion de entrenador
-            if nuevo_usuario.rol == "ENT":
-                nueva_persona = Persona(
-                    nombre=request.json["nombre"],
-                    apellido=request.json["apellido"],
-                    usuario=nuevo_usuario.id,
-                    entrenando=False
-                )
-                db.session.add(nueva_persona)
+        pattern = re.compile("(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z0-9].{7,}")
+        contrasena_val =  request.json["contrasena"]
+        if pattern.match(contrasena_val) :
+            usuario = Usuario.query.filter(
+                Usuario.usuario == request.json["usuario"]).first()
+            if usuario is None:
+                contrasena_encriptada = hashlib.md5(
+                    request.json["contrasena"].encode('utf-8')).hexdigest()
+                if not "rol" in request.json:
+                    nuevo_usuario = Usuario(
+                        usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol="ENT")
+                else:
+                    nuevo_usuario = Usuario(
+                        usuario=request.json["usuario"], contrasena=contrasena_encriptada, rol=request.json["rol"])
+                db.session.add(nuevo_usuario)
                 db.session.commit()
 
-            return {"mensaje": "usuario creado exitosamente", "id": nuevo_usuario.id}
+                # Creacion de entrenador
+                if nuevo_usuario.rol == "ENT":
+                    nueva_persona = Persona(
+                        nombre=request.json["nombre"],
+                        apellido=request.json["apellido"],
+                        usuario=nuevo_usuario.id,
+                        entrenando=False
+                    )
+                    db.session.add(nueva_persona)
+                    db.session.commit()
+
+                return {"mensaje": "usuario creado exitosamente", "id": nuevo_usuario.id}
+            else:
+                return "El usuario ya existe", 409
         else:
-            return "El usuario ya existe", 409
+            return "Contrasena invalida", 409
 
     def put(self, id_usuario):
         usuario = Usuario.query.get_or_404(id_usuario)
@@ -79,10 +85,8 @@ class VistaLogIn(Resource):
     def post(self):
         contrasena_encriptada = hashlib.md5(
             request.json["contrasena"].encode('utf-8')).hexdigest()
-        print(contrasena_encriptada)
         usuario = Usuario.query.filter(Usuario.usuario == request.json["usuario"],
                                        Usuario.contrasena == contrasena_encriptada).first()
-        print(usuario)
         rol = usuario.rol
         db.session.commit()
         if usuario is None:
@@ -101,7 +105,21 @@ class VistaPersonas(Resource):
 
     @jwt_required()
     def post(self, id_usuario):
-        usuario = Usuario.query.get_or_404(id_usuario)
+        if "usuario" and "contrasena" in request.json:
+            usuarioACrear = request.json["usuario"]
+            usuario = Usuario.query.filter(Usuario.usuario == usuarioACrear).first()
+            # Validamos si el usuario ya esta registrado
+            if usuario is None:
+                # Creación del usuario
+                contrasena_encriptada = hashlib.md5(
+                    request.json["contrasena"].encode('utf-8')).hexdigest()
+                nuevo_usuario = Usuario(
+                        usuario=usuarioACrear, contrasena=contrasena_encriptada, rol="CLI")
+                db.session.add(nuevo_usuario)
+                db.session.commit()
+            else:
+                return "El usuario ya existe", 409
+        # Creación del cliente
         nueva_persona = Persona(
             nombre=request.json["nombre"],
             apellido=request.json["apellido"],
@@ -121,7 +139,7 @@ class VistaPersonas(Resource):
         db.session.add(nueva_persona)
         db.session.commit()
         return persona_schema.dump(nueva_persona)
-
+        
 
 class VistaPersona(Resource):
     @jwt_required()
@@ -210,19 +228,16 @@ class VistaEntrenamientos(Resource):
     def get(self, id_persona):
         persona = Persona.query.get_or_404(id_persona)
         entrenamiento_array = []
-
         for entrenamiento in persona.entrenamientos:
             ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
-            entrenamiento_schema_dump = entrenamiento_schema.dump(
-                entrenamiento)
-            entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(
-                ejercicio)
-            entrenamiento_array.append(entrenamiento_schema_dump)
+            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
+            if entrenamiento_schema_dump['rutina'] == None:
+              entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
+              entrenamiento_array.append(entrenamiento_schema_dump)
         return [entrenamiento for entrenamiento in entrenamiento_array]
 
     @jwt_required()
     def post(self, id_persona):
-        print(datetime.strptime(request.json["fecha"], '%Y-%m-%d'))
         nuevo_entrenamiento = Entrenamiento(
             tiempo=datetime.strptime(
                 request.json["tiempo"], '%H:%M:%S').time(),
@@ -297,8 +312,25 @@ class VistaEntrenadores(Resource):
         entrenadores = [usuario_schema.dump(
             usuario) for usuario in Usuario.query.filter_by(rol="ENT").all()]
         entrenadores_list = [val['id'] for val in entrenadores]
-        print(entrenadores_list)
         return [persona_schema.dump(persona) for persona in Persona.query.filter(Persona.usuario.in_(entrenadores_list)).all()]
+
+
+class VistaEntrenador(Resource):
+    @jwt_required()
+    def delete(self, id_usuario):
+        personas = Persona.query.filter_by(entrenador=id_usuario).all()
+        if len(personas) == 0:
+             # Se elimina la persona
+            persona = Persona.query.filter_by(usuario=id_usuario).first()
+            db.session.delete(persona)
+            db.session.commit()
+            # Se elimina el usuario
+            usuario = Usuario.query.get_or_404(id_usuario)
+            db.session.delete(usuario)
+            db.session.commit()
+            return '', 204
+        else:
+            return 'El entrenador tienen clientes asociados', 409
 
 
 class VistaRutinas(Resource):
@@ -310,19 +342,25 @@ class VistaRutinas(Resource):
 
     @jwt_required()
     def post(self):
+        rutinas_creadas = Rutina.query.all()
         nueva_rutina = Rutina(
             nombre=request.json["nombre"],
             descripcion=request.json["descripcion"],
         )
+        for rutina in rutinas_creadas:
+            if rutina.nombre.lower() == nueva_rutina.nombre.lower():
+                return "La Rutina ya existe", 409 
         db.session.add(nueva_rutina)
         db.session.commit()
         return rutina_schema.dump(nueva_rutina)
+            
+        
+        
     
 class VistaRutina(Resource):
     @jwt_required()
     def get(self, id_rutina):        
         return rutina_schema.dump(Rutina.query.get_or_404(id_rutina))
-
 
 class VistaRutinaDiferente(Resource):
     @jwt_required()
@@ -336,12 +374,9 @@ class VistaRutinaDiferente(Resource):
             nombreEjercicio = ejercicio['nombre']
             if not nombreEjercicio in ejerciciosRutinaString:
               ejerciciosDisponibles.append(ejercicio)
-        return ejerciciosDisponibles
-        
+        return ejerciciosDisponibles       
 
-        
-
-    
+ 
 class VistaRutinaEjercicio(Resource):    
     @jwt_required()
     def put(self, id_rutina, id_ejercicio):        
@@ -350,6 +385,105 @@ class VistaRutinaEjercicio(Resource):
         rutina.ejercicios.append(ejercicio)
         db.session.commit()
         return  rutina_schema.dump(rutina)
+
+class VistaRutinasEntrenamiento(Resource):    
+    @jwt_required()
+    def get(self):        
+        sql_rutinas = db.session.execute('SELECT Q1.ID FROM RUTINA AS Q1, (SELECT RUTINA_ID, COUNT(RUTINA_ID) AS TOTAL_EJERCICIOS FROM RUTINA_EJERCICIO GROUP BY RUTINA_ID) \
+                                          AS Q2 WHERE Q1.ID=Q2.RUTINA_ID AND Q2.TOTAL_EJERCICIOS>=3')                 
+              
+        id_rutinas = sql_rutinas.scalars().all()  
+        rutinas = db.session.query(Rutina).all()
+        rutinasEntrenamiento = []
+        for rutina in rutinas:
+            if rutina.id in id_rutinas:
+                rutinasEntrenamiento.append(rutina)
+
+        return [rutina_schema.dump(rutina) for rutina in rutinasEntrenamiento]
     
 
+    @jwt_required()
+    def post(self):
+        idRutina = request.json["idRutina"]
+        fecha = datetime.strptime(request.json["fecha"], '%Y-%m-%d').date()
+        idPersona = request.json["idPersona"]
+        entrenamientos = request.json["entrenamientos"]
+        
+        for entrenamiento in entrenamientos:
+            repeticiones = entrenamiento['repeticiones']            
+            nuevo_entrenamiento = Entrenamiento(
+                tiempo=datetime.strptime(
+                    entrenamiento["tiempo"], '%H:%M:%S').time(),
+                repeticiones=entrenamiento["repeticiones"], 
+                fecha=fecha,
+                ejercicio=entrenamiento["ejercicio"],
+                persona=idPersona,
+                rutina=idRutina                
+            )
+            db.session.add(nuevo_entrenamiento)
+            db.session.commit()
+        
+        data =  "Se realiza la creación exitosa"
+        # Creating a dictionary
+        response = {"mensaje": "proceso exitoso"}
+        return response, 200
 
+
+
+class VistaRutinaEntrenamientoPersona(Resource):
+    @jwt_required()
+    def get(self,id_persona):
+        persona = Persona.query.get_or_404(id_persona)
+        entrenamientorutina_array = []
+        for entrenamiento in persona.entrenamientos:
+            ejercicio = Ejercicio.query.get_or_404(entrenamiento.ejercicio)
+            entrenamiento_schema_dump = entrenamiento_schema.dump(entrenamiento)
+            if entrenamiento_schema_dump['rutina'] != None:
+              entrenamiento_schema_dump['ejercicio'] = ejercicio_schema.dump(ejercicio)
+              entrenamientorutina_array.append(entrenamiento_schema_dump)
+        
+        result = []
+        key_function = lambda x: (x["fecha"], x["rutina"], x["persona"])
+        entrenamientorutina_array.sort(key = key_function)
+        for group, entrenamientos in groupby(entrenamientorutina_array, key_function):
+                user = {
+                        "fecha": group[0],
+                        "rutina": rutina_schema.dump(Rutina.query.get_or_404(group[1])),
+                        "persona": group[2],
+                        "repeticionesTotales": 0,
+                        "tiempoTotal": "00:00:00",
+                        "entrenamientos": []
+                }
+                ttoal = [0,0,0]
+                for entrenamiento in entrenamientos:
+                    user["repeticionesTotales"] += int(float(entrenamiento["repeticiones"]))
+                    arr = entrenamiento["tiempo"].split(':')
+                    ttoal[0] += int(arr[0])
+                    ttoal[1] += int(arr[1])
+                    if(ttoal[1] > 60):
+                        ttoal[0] += int(ttoal[1] / 60)
+                        ttoal[1] = int(ttoal[1] % 60)
+                    ttoal[2] += int(arr[2])
+                    if(ttoal[2] > 60):
+                        ttoal[1] += int(ttoal[2] / 60)
+                        ttoal[2] = int(ttoal[2] % 60)
+                    user["entrenamientos"].append(entrenamiento)
+                user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
+                result.append(user)
+        return [entrenamientoRutina for entrenamientoRutina in result]
+   
+
+
+class VistaResultadosEntrenamientos(Resource):
+    @jwt_required()
+    def get(self, id_persona):
+        sql_resultados = db.session.execute("SELECT T1.persona, T1.fecha, T1.[Tipo de Entrenamiento], SUM(repeticiones) AS [Repeticiones Ejecutadas], SUM(T1.[Total Calorias]) AS [Calorias Consumidas] \
+                                            FROM (SELECT ENTR.persona, ENTR.fecha, 'Ejercicio' AS [Tipo de Entrenamiento], ENTR.repeticiones, EJER.calorias AS calorias_por_repeticion, ENTR.repeticiones*EJER.calorias AS [Total Calorias] \
+                                            FROM ENTRENAMIENTO AS ENTR, EJERCICIO AS EJER WHERE ENTR.RUTINA IS NULL AND ENTR.EJERCICIO=EJER.ID) AS T1 GROUP BY T1.Fecha, T1.[Tipo de Entrenamiento] HAVING persona="+str(id_persona)+" " \
+                                            "UNION SELECT T1.persona, T1.fecha, T1.[Tipo de Entrenamiento], SUM(repeticiones) AS [Repeticiones Ejecutadas], SUM(T1.[Total Calorias]) AS [Calorias Consumidas] \
+                                            FROM (SELECT ENTR.persona, ENTR.fecha, 'Rutina' AS [Tipo de Entrenamiento], ENTR.repeticiones, EJER.calorias AS calorias_por_repeticion, ENTR.repeticiones*EJER.calorias AS [Total Calorias] \
+                                            FROM ENTRENAMIENTO AS ENTR, EJERCICIO AS EJER WHERE ENTR.RUTINA IS NOT NULL AND ENTR.EJERCICIO=EJER.ID) AS T1 GROUP BY T1.Fecha, T1.[Tipo de Entrenamiento] HAVING persona="+str(id_persona)+" ORDER BY fecha, [Tipo de Entrenamiento]")
+        
+        
+        return jsonify([dict(registro) for registro in sql_resultados])
+    

@@ -7,6 +7,7 @@ from faker.generator import random
 from modelos import db, Usuario, Ejercicio
 
 from app import app
+from modelos.modelos import PersonaSchema
 
 
 class TestEjercicio(TestCase):
@@ -14,22 +15,33 @@ class TestEjercicio(TestCase):
     def setUp(self):
         self.data_factory = Faker()
         self.client = app.test_client()
-        
-        nombre_usuario = 'test_' + self.data_factory.name()
-        contrasena = 'T1$' + self.data_factory.word()
-        contrasena_encriptada = hashlib.md5(contrasena.encode('utf-8')).hexdigest()
-        
-        # Se crea el usuario para identificarse en la aplicación
-        usuario_nuevo = Usuario(usuario=nombre_usuario, contrasena=contrasena_encriptada)
-        db.session.add(usuario_nuevo)
-        db.session.commit()
-
-        
+        self.persona_schema = PersonaSchema()
+        self.usuarios_creados = []
+        # Se generan los datos para crear el entrenador
+        self.nombre_entrenador = self.data_factory.name()
+        self.apellido_entrenador = self.data_factory.name()
+        usuario = "test_" + self.data_factory.name()
+        contrasena = self.data_factory.password(length=10, special_chars=False, upper_case=True, lower_case= True, digits= True)
+        # Se forma la esctructura del request
+        nueva_persona = {
+            "nombre": self.nombre_entrenador,
+            "apellido": self.apellido_entrenador,
+            "usuario": usuario,
+            "contrasena": contrasena,
+            "rol": "ENT",
+        }
+        # Se genera el consumo del API para la creacion del entrenador
+        solicitud_creacion = self.client.post(
+            "/signin",
+            data=json.dumps(nueva_persona),
+            headers={"Content-Type": "application/json"},
+        )
+        # Se verifica si petición de creacion del entrenador y usuario fue exitosa
+        self.assertEqual(solicitud_creacion.status_code, 200)
         usuario_login = {
-            "usuario": nombre_usuario,
+            "usuario": usuario,
             "contrasena": contrasena
         }
-
         solicitud_login = self.client.post("/login",
                                                 data=json.dumps(usuario_login),
                                                 headers={'Content-Type': 'application/json'})
