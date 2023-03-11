@@ -460,7 +460,13 @@ class VistaRutinaEntrenamientoPersona(Resource):
                     arr = entrenamiento["tiempo"].split(':')
                     ttoal[0] += int(arr[0])
                     ttoal[1] += int(arr[1])
+                    if(ttoal[1] > 60):
+                        ttoal[0] += int(ttoal[1] / 60)
+                        ttoal[1] = int(ttoal[1] % 60)
                     ttoal[2] += int(arr[2])
+                    if(ttoal[2] > 60):
+                        ttoal[1] += int(ttoal[2] / 60)
+                        ttoal[2] = int(ttoal[2] % 60)
                     user["entrenamientos"].append(entrenamiento)
                 user["tiempoTotal"] = str(datetime.strptime(":".join(str(n) for n in ttoal), '%H:%M:%S').time())
                 result.append(user)
